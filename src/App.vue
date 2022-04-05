@@ -1,17 +1,112 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <p>{{ fpsCount }} fps, {{ peopleCount }} people</p>
+  <p>
+    Choose display mode:
+    <el-radio-group v-model="mode" size="large">
+      <el-radio-button label="Debug" />
+      <el-radio-button label="Avatar" />
+    </el-radio-group>
+  </p>
+  <p>
+    Choose precision:
+    <el-radio-group v-model="precision" size="large">
+      <el-radio-button label="low" />
+      <el-radio-button label="mid" />
+      <el-radio-button label="high" />
+      <el-radio-button label="ultra" />
+    </el-radio-group>
+  </p>
+  <canvas
+    class="output_canvas"
+    width="1280"
+    height="720"
+    style="border: 1px solid red; transform: scaleX(-1)"
+  ></canvas>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+import loadNet from "./core";
+import debugMode from "./components/debug";
+import avatarMode from "./components/avatar";
+
+let net = null,
+  stop = null;
 
 export default {
-  name: 'App',
-  components: {
-    HelloWorld
-  }
-}
+  name: "App",
+  data() {
+    return {
+      fpsCount: 0,
+      peopleCount: 0,
+      mode: "Debug",
+      precision: "mid",
+    };
+  },
+  watch: {
+    mode() {
+      this.mountMode();
+    },
+    async precision() {
+      if (net) {
+        net.dispose();
+        net = null;
+      }
+
+      switch (this.precision) {
+        case "low":
+          net = await loadNet(16, 0.5, 200);
+          break;
+        case "mid":
+          net = await loadNet(16, 0.5, 500);
+          break;
+        case "high":
+          net = await loadNet(16, 0.75, 1000);
+          break;
+        case "ultra":
+          net = await loadNet(8, 1, 1280);
+          break;
+      }
+      this.mountMode();
+    },
+  },
+  methods: {
+    async mountMode() {
+      const videoElement = document.createElement("video");
+      videoElement.width = 1280;
+      videoElement.height = 720;
+      const canvasElement = document.getElementsByClassName("output_canvas")[0];
+
+      if (stop) {
+        await stop();
+        stop = null;
+      }
+
+      switch (this.mode) {
+        case "Debug":
+          stop = debugMode(videoElement, canvasElement, net, this);
+          break;
+        case "Avatar":
+          stop = avatarMode(videoElement, canvasElement, net, this);
+          break;
+      }
+    },
+  },
+  async mounted() {
+    net = await loadNet(); // Prevent observation on net properties
+
+    this.mountMode();
+  },
+  async unmounted() {
+    if (stop) {
+      await stop();
+      stop = null;
+    }
+    if (net) {
+      net.dispose();
+      net = null;
+    }
+  },
+};
 </script>
 
 <style>
