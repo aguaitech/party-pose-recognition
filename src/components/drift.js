@@ -186,40 +186,6 @@ class Wind {
 
 /**
  *
- * @param {import("@tensorflow-models/posenet").Keypoint} lear
- * @param {import("@tensorflow-models/posenet").Keypoint} rear
- * @param {import("@tensorflow-models/posenet").Keypoint} nose
- * @param {{position:{x:number,y:number}}[]} keypoints
- * @param {number} avatarWidth
- * @param {number} targetHeight
- * @returns {{x:number,y:number,visibility:1}[]}
- */
-// function normalizePoints(
-//   lear,
-//   rear,
-//   nose,
-//   keypoints,
-//   avatarWidth,
-//   targetHeight,
-//   canvasWidth,
-//   canvasHeight
-// ) {
-//   const scale = Math.min(
-//     1 / 3,
-//     Math.abs(avatarWidth / (rear.position.x - lear.position.x))
-//   );
-//   const yOffset = targetHeight - nose.position.y;
-//   return keypoints.map(({ position }) => ({
-//     x: ((position.x - nose.position.x) * scale + nose.position.x) / canvasWidth,
-//     y:
-//       ((position.y - nose.position.y) * scale + nose.position.y + yOffset) /
-//       canvasHeight,
-//     visibility: 1,
-//   }));
-// }
-
-/**
- *
  * @param {HTMLVideoElement} videoElement
  * @param {HTMLCanvasElement} canvasElement
  * @param {import("@tensorflow-models/posenet").PoseNet} net
@@ -267,6 +233,15 @@ export default function (videoElement, canvasElement, net, $Vue) {
 
   const totalSprites = sticks.length;
 
+  const particles = new PIXI.ParticleContainer((1280 * 720) / 20 / 20, {
+    position: false,
+    uvs: false,
+    vertices: true,
+    rotation: true,
+    tint: true,
+  });
+  app.stage.addChild(particles);
+
   for (let i = 0; i < totalSprites; i++) {
     // create a new Sprite
     const dude = PIXI.Sprite.from("examples/assets/maggot_tiny.png");
@@ -278,11 +253,9 @@ export default function (videoElement, canvasElement, net, $Vue) {
     dude.angle = sticks[i].rho;
     dude.scale.set(Math.sin((sticks[i].phi / 180) * Math.PI));
 
-    app.stage.addChild(dude);
-
     maggots.push(dude);
 
-    app.stage.addChild(dude);
+    particles.addChild(dude);
   }
 
   const wind = new Wind();

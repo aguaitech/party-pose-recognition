@@ -6,6 +6,7 @@
       <el-radio-button label="Debug" />
       <el-radio-button label="Avatar" />
       <el-radio-button label="Drift" />
+      <el-radio-button label="Circles" />
     </el-radio-group>
   </p>
   <p>
@@ -31,6 +32,7 @@ import loadNet from "./core";
 import debugMode from "./components/debug";
 import avatarMode from "./components/avatar";
 import driftMode from "./components/drift";
+import circlesMode from "./components/circles";
 
 let net = null,
   stop = null;
@@ -101,6 +103,9 @@ export default {
           break;
         case "Drift":
           stop = driftMode(videoElement, canvasElement, net, this);
+          break;
+        case "Circles":
+          stop = circlesMode(videoElement, canvasElement, net, this);
           break;
       }
     },
