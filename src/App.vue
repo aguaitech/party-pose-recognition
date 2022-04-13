@@ -5,6 +5,7 @@
     <el-radio-group v-model="mode" size="large">
       <el-radio-button label="Debug" />
       <el-radio-button label="Avatar" />
+      <el-radio-button label="Drift" />
     </el-radio-group>
   </p>
   <p>
@@ -16,18 +17,20 @@
       <el-radio-button label="ultra" />
     </el-radio-group>
   </p>
-  <canvas
-    class="output_canvas"
-    width="1280"
-    height="720"
-    style="border: 1px solid red; transform: scaleX(-1)"
-  ></canvas>
+  <div class="output_canvas">
+    <canvas
+      width="1280"
+      height="720"
+      style="border: 1px solid red; transform: scaleX(-1)"
+    ></canvas>
+  </div>
 </template>
 
 <script>
 import loadNet from "./core";
 import debugMode from "./components/debug";
 import avatarMode from "./components/avatar";
+import driftMode from "./components/drift";
 
 let net = null,
   stop = null;
@@ -74,7 +77,15 @@ export default {
       const videoElement = document.createElement("video");
       videoElement.width = 1280;
       videoElement.height = 720;
-      const canvasElement = document.getElementsByClassName("output_canvas")[0];
+      const canvasElement = document.createElement("canvas");
+      canvasElement.width = 1280;
+      canvasElement.height = 720;
+      canvasElement.setAttribute(
+        "style",
+        "border: 1px solid red; transform: scaleX(-1)"
+      );
+      document.querySelector(".output_canvas canvas").remove();
+      document.querySelector(".output_canvas").appendChild(canvasElement);
 
       if (stop) {
         await stop();
@@ -87,6 +98,9 @@ export default {
           break;
         case "Avatar":
           stop = avatarMode(videoElement, canvasElement, net, this);
+          break;
+        case "Drift":
+          stop = driftMode(videoElement, canvasElement, net, this);
           break;
       }
     },
