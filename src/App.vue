@@ -7,6 +7,7 @@
       <el-radio-button label="Avatar" />
       <el-radio-button label="Drift" />
       <el-radio-button label="Circles" />
+      <el-radio-button label="Mixed" />
     </el-radio-group>
   </p>
   <p>
@@ -20,8 +21,8 @@
   </p>
   <div class="output_canvas">
     <canvas
-      width="1280"
-      height="720"
+      width="1920"
+      height="1080"
       style="border: 1px solid red; transform: scaleX(-1)"
     ></canvas>
   </div>
@@ -33,6 +34,7 @@ import debugMode from "./components/debug";
 import avatarMode from "./components/avatar";
 import driftMode from "./components/drift";
 import circlesMode from "./components/circles";
+import mixedMode from "./components/mixed";
 
 let net = null,
   stop = null;
@@ -68,7 +70,7 @@ export default {
           net = await loadNet(16, 0.75, 1000);
           break;
         case "ultra":
-          net = await loadNet(8, 1, 1280);
+          net = await loadNet(8, 1, 1920);
           break;
       }
       this.mountMode();
@@ -77,11 +79,11 @@ export default {
   methods: {
     async mountMode() {
       const videoElement = document.createElement("video");
-      videoElement.width = 1280;
-      videoElement.height = 720;
+      videoElement.width = 1920;
+      videoElement.height = 1080;
       const canvasElement = document.createElement("canvas");
-      canvasElement.width = 1280;
-      canvasElement.height = 720;
+      canvasElement.width = 1920;
+      canvasElement.height = 1080;
       canvasElement.setAttribute(
         "style",
         "border: 1px solid red; transform: scaleX(-1)"
@@ -106,6 +108,9 @@ export default {
           break;
         case "Circles":
           stop = circlesMode(videoElement, canvasElement, net, this);
+          break;
+        case "Mixed":
+          stop = mixedMode(videoElement, canvasElement, net, this);
           break;
       }
     },

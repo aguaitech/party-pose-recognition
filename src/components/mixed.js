@@ -184,6 +184,42 @@ class Wind {
   }
 }
 
+const MAX_CIRCLE_CNT = 1500,
+  MIN_CIRCLE_CNT = 100;
+//const MAX_VERTEX_CNT = 30,
+// MIN_VERTEX_CNT = 3;
+const BG_OPACITY = 0.5;
+
+let circleCnt = 1500,
+  vertexCnt = 30;
+
+function getCenterByTheta(theta, time, scale) {
+  const direction = [Math.cos(theta), Math.sin(theta)];
+  const distance = 0.6 + 0.2 * Math.cos(theta * 6 + Math.cos(theta * 8 + time));
+  const circleCenter = direction
+    .map((v) => v * distance * scale)
+    .map((v, i) => v + (i == 0 ? 1920 / 2 : 1080 / 2));
+  return circleCenter;
+}
+
+function getSizeByTheta(theta, time, scale) {
+  const offset = 0.2 + 0.12 * Math.cos(theta * 9 - time * 2);
+  const circleSize = scale * offset;
+  return circleSize;
+}
+
+function getColorByTheta(theta, time) {
+  const th = 8 * theta + time * 2;
+  const r = 0.6 + 0.4 * Math.cos(th),
+    g = 0.6 + 0.4 * Math.cos(th - Math.PI / 3),
+    b = 0.6 + 0.4 * Math.cos(th - (Math.PI * 2) / 3),
+    a =
+      ((circleCnt - MIN_CIRCLE_CNT) / (MAX_CIRCLE_CNT - MIN_CIRCLE_CNT)) *
+        (0.3 - 1.5) +
+      1.5;
+  return [r * 255, g * 255, b * 255, a];
+}
+
 /**
  *
  * @param {HTMLVideoElement} videoElement
@@ -200,6 +236,10 @@ export default function (videoElement, canvasElement, net, $Vue) {
     height: 1080,
   });
 
+  const circles = [];
+  let counter = 0;
+  const scale = 1920 / 2;
+
   const sticks = [];
 
   // let counter = 0;
@@ -212,14 +252,59 @@ export default function (videoElement, canvasElement, net, $Vue) {
     }
   }
 
+  const particles = new PIXI.ParticleContainer(MAX_CIRCLE_CNT, {
+    position: true,
+    uvs: false,
+    vertices: true,
+    rotation: false,
+    tint: true,
+  });
+
+  const circleBase = new PIXI.Graphics();
+  circleBase.lineStyle({ width: 5, color: 0xffffff });
+
+  for (let vi = 0; vi <= vertexCnt; vi++) {
+    const thetaV = (vi / vertexCnt) * Math.PI * 2;
+    const x = Math.cos(thetaV) * scale;
+    const y = Math.sin(thetaV) * scale;
+    if (vi == 0) {
+      circleBase.moveTo(x, y);
+    } else {
+      circleBase.lineTo(x, y);
+    }
+  }
+
+  const circleTexture = app.renderer.generateTexture(circleBase);
+
+  for (let i = 0; i < circleCnt; i++) {
+    const circle = new PIXI.Sprite(circleTexture);
+
+    const time = counter / 20;
+    const thetaC = (i / circleCnt) * Math.PI * 2;
+
+    const circleSize = getSizeByTheta(thetaC, time, scale);
+
+    circle.anchor.set(0.5);
+    circle.position.set(...getCenterByTheta(thetaC, time, scale));
+    circle.scale.set(circleSize / scale);
+
+    const circleColor = getColorByTheta(thetaC, time);
+
+    circle.tint = circleColor.slice(0, 3).reduce((p, v) => p * 256 + v);
+    circle.alpha = circleColor[3] * BG_OPACITY;
+
+    circles.push(circle);
+    particles.addChild(circle);
+  }
+
   const camera = new Camera(videoElement, {
     onFrame: async () => {
       if (net) {
-        // counter++;
         let startTime = Date.now();
         const poses = await net.estimateMultiplePoses(videoElement, {
           maxDetections: 64,
         });
+
         let endTime = Date.now();
         $Vue.fpsCount = Math.round(1000 / (endTime - startTime));
         $Vue.peopleCount = poses.length;
@@ -230,19 +315,21 @@ export default function (videoElement, canvasElement, net, $Vue) {
   });
   camera.start();
 
-  // create an array to store all the sprites
   const maggots = [];
 
   const totalSprites = sticks.length;
 
-  const particles = new PIXI.ParticleContainer(totalSprites, {
+  const particles2 = new PIXI.ParticleContainer(totalSprites, {
     position: false,
     uvs: false,
     vertices: true,
     rotation: true,
     tint: true,
   });
+
+  // particles2.alpha = BG_OPACITY;
   app.stage.addChild(particles);
+  app.stage.addChild(particles2);
 
   for (let i = 0; i < totalSprites; i++) {
     // create a new Sprite
@@ -257,16 +344,30 @@ export default function (videoElement, canvasElement, net, $Vue) {
 
     maggots.push(dude);
 
-    particles.addChild(dude);
+    particles2.addChild(dude);
   }
 
   const wind = new Wind();
 
   app.ticker.add(() => {
-    // counter++;
-    // if (counter % 10 === 0) {
-    //   wind.next();
-    // }
+    counter++;
+    for (const i in circles) {
+      const circle = circles[i];
+
+      const time = counter / 20;
+      const thetaC = (i / circleCnt) * Math.PI * 2;
+
+      const circleSize = getSizeByTheta(thetaC, time, scale);
+
+      circle.position.set(...getCenterByTheta(thetaC, time, scale));
+      circle.scale.set(circleSize / scale);
+
+      const circleColor = getColorByTheta(thetaC, time);
+
+      circle.tint = circleColor.slice(0, 3).reduce((p, v) => p * 256 + v);
+      circle.alpha = circleColor[3] * BG_OPACITY;
+    }
+
     wind.next();
     // iterate through the sprites and update their position
     for (let i = 0; i < maggots.length; i++) {
