@@ -43,7 +43,7 @@ export default function (videoElement, canvasElement, net, $Vue) {
         }
       }
     },
-    width: 1920,
+    width: 1081,
     height: 1080,
   });
   camera.start();

@@ -119,10 +119,10 @@ class Stick {
 
 class Wind {
   windMap = null;
-  width = 1920;
+  width = 1081;
   height = 1080;
-  maxWind = 30000;
-  kernel = 1920;
+  maxWind = 10000;
+  kernel = 1081;
   subStep = 3;
   centroids = 2;
   alpha = 0.95;
@@ -198,7 +198,7 @@ function getCenterByTheta(theta, time, scale) {
   const distance = 0.6 + 0.2 * Math.cos(theta * 6 + Math.cos(theta * 8 + time));
   const circleCenter = direction
     .map((v) => v * distance * scale)
-    .map((v, i) => v + (i == 0 ? 1920 / 2 : 1080 / 2));
+    .map((v, i) => v + (i == 0 ? 1081 / 2 : 1080 / 2));
   return circleCenter;
 }
 
@@ -232,13 +232,13 @@ export default function (videoElement, canvasElement, net, $Vue) {
 
   const app = new PIXI.Application({
     view: canvasElement,
-    width: 1920,
+    width: 1081,
     height: 1080,
   });
 
   const circles = [];
   let counter = 0;
-  const scale = 1920 / 2;
+  const scale = 1081 / 2;
 
   const sticks = [];
 
@@ -246,7 +246,7 @@ export default function (videoElement, canvasElement, net, $Vue) {
 
   const gap = 30;
 
-  for (let i = 0; i < 1920 / gap; i++) {
+  for (let i = 0; i < 1081 / gap; i++) {
     for (let j = 0; j < 1080 / gap; j++) {
       sticks.push(new Stick(i * gap + gap / 2, j * gap + gap / 2));
     }
@@ -310,7 +310,7 @@ export default function (videoElement, canvasElement, net, $Vue) {
         $Vue.peopleCount = poses.length;
       }
     },
-    width: 1920,
+    width: 1081,
     height: 1080,
   });
   camera.start();
