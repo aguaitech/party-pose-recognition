@@ -38,6 +38,8 @@ import driftMode from "./components/drift";
 import circlesMode from "./components/circles";
 import mixedMode from "./components/mixed";
 import liquidMode from "./components/liquid";
+import scopeMode from "./components/kaleidoscope";
+
 
 let net = null,
   stop = null;
@@ -48,7 +50,7 @@ export default {
     return {
       fpsCount: 0,
       peopleCount: 0,
-      mode: "Debug",
+      mode: "Scope",
       precision: "mid",
     };
   },
@@ -119,7 +121,7 @@ export default {
           stop = liquidMode(videoElement, canvasElement, net, this);
           break;
         case "Scope":
-          stop = mixedMode(videoElement, canvasElement, net, this);
+          stop = scopeMode(videoElement, canvasElement, net, this);
           break;
       }
     },
