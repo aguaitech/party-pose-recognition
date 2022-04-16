@@ -10,7 +10,7 @@ import { Camera } from "@mediapipe/camera_utils";
 // import { drawConnectors } from "@mediapipe/drawing_utils";
 // import seedrandom from "seedrandom";
 import * as PIXI from "pixi.js";
-import color from "color";
+// import color from "color";
 
 class Drop {
   cx = 0;
@@ -186,23 +186,6 @@ export default function (videoElement, canvasElement, net, $Vue) {
     drops.push(new Drop(Math.random() * 1081, Math.random() * 1080));
   }
 
-  const colorCache = [];
-
-  for (let i = 0; i < 100; i++) {
-    colorCache.push(
-      parseInt(
-        color(
-          `hsl(${283 * (1 - i / 100) + (283 * i) / 100}, ${
-            0 * (1 - i / 100) + (50 * i) / 100
-          }%, ${0 * (1 - i / 100) + (47 * i) / 100}%)`
-        )
-          .hex()
-          .slice(1),
-        16
-      )
-    );
-  }
-
   // let pointer = 0;
 
   // const gap = 30;
@@ -234,14 +217,14 @@ export default function (videoElement, canvasElement, net, $Vue) {
   // create an array to store all the sprites
   const maggots = [];
 
-  const totalSprites = 1081 * 1080;
+  const totalSprites = (1081 + 1080) * 2 * 50;
 
   const particles = new PIXI.ParticleContainer(totalSprites, {
-    position: false,
+    position: true,
     uvs: false,
     vertices: false,
     rotation: false,
-    tint: true,
+    tint: false,
   });
   app.stage.addChild(particles);
 
@@ -252,13 +235,21 @@ export default function (videoElement, canvasElement, net, $Vue) {
 
   const wind = new Wind();
 
-  for (let i = 0; i < 1081; i++) {
-    for (let j = 0; j < 1080; j++) {
+  for (let i = 0; i < 10; i++) {
+    const contour = wind.getContourLine(i / 10, 0.001);
+    for (let j = 0; j < ((1081 + 1080) * 2 * 50) / 10; j++) {
+      // create a new Sprite
       const dude = new PIXI.Sprite(circleTexture);
 
-      dude.position.set(i, j);
+      dude.anchor.set(0.5);
 
-      dude.tint = colorCache[Math.round(wind.getNormalizedMap()[i][j] * 99)];
+      // const drop = drops[i];
+      // drop.next();
+      if (contour[j]) {
+        dude.position.set(contour[j][0], contour[j][1]);
+      } else {
+        dude.position.set(-1, -1);
+      }
 
       maggots.push(dude);
 
@@ -285,11 +276,16 @@ export default function (videoElement, canvasElement, net, $Vue) {
     //   dude.scale.set(dude.scale.x * 0.999);
     // }
 
-    for (let i = 0; i < 1081; i++) {
-      for (let j = 0; j < 1080; j++) {
-        const dude = maggots[i * 1080 + j];
+    for (let i = 0; i < 10; i++) {
+      const contour = wind.getContourLine(i / 10, 0.001);
+      for (let j = 0; j < ((1081 + 1080) * 2 * 50) / 10; j++) {
+        const dude = maggots[(i * ((1081 + 1080) * 2 * 50)) / 10 + j];
 
-        dude.tint = colorCache[Math.round(wind.getNormalizedMap()[i][j] * 99)];
+        if (contour[j]) {
+          dude.position.set(contour[j][0], contour[j][1]);
+        } else {
+          dude.position.set(-1, -1);
+        }
       }
     }
 
