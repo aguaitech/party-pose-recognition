@@ -132,7 +132,17 @@ export default function (videoElement, canvasElement, net, $Vue) {
   });
   camera.start();
 
+  var g_TICK = 1000 / 30; // 1000/40 = 25 frames per second
+  var g_Time = 0;
+
   app.ticker.add(() => {
+    var timeNow = new Date().getTime();
+    var timeDiff = timeNow - g_Time;
+    if (timeDiff < g_TICK) return;
+
+    // We are now meeting the frame rate, so reset the last time the animation is done
+    g_Time = timeNow;
+
     counter++;
     for (const i in circles) {
       const circle = circles[i];
