@@ -79,9 +79,10 @@ class Kaleidoscope {
       for (let i = 0; i < this.spriteTiles.length; i++) {
         if (this.interactiveMode) {
           // this.spriteTiles[i].tilePosition.x = this.mouseX + Math.sin(this.count);
-          this.spriteTiles[i].tilePosition.x = this.mouseX + this.count;
+          this.spriteTiles[i].tilePosition.x = this.mouseX  + this.count;
           // this.spriteTiles[i].tilePosition.y = this.mouseY + Math.cos(this.count);
-          this.spriteTiles[i].tilePosition.y = this.mouseY + this.count;
+          this.spriteTiles[i].tilePosition.y = this.mouseY  + this.count;
+          console.log(this.mouseX, this.mouseY, this.count);
           // this.mouseX = 0;
           // this.mouseY = 0;
         } else {
@@ -101,8 +102,8 @@ class Kaleidoscope {
     this.speed = speed;
   }
   updateMousePosition(dx, dy) {
-    this.mouseX += dx;
-    this.mouseY += dy;
+    this.mouseX = dx;
+    this.mouseY = dy;
   }
 }
 
@@ -143,23 +144,29 @@ export default function (videoElement, canvasElement, net, $Vue) {
         let filterPoses = poses.filter((pose) => pose.score > 0.3);
         const baseSpeed = 0.2 + 2 * filterPoses.length;
         scope.setBaseSpeed(baseSpeed);
-        if (!filterPoses.length || !filterPoses[0][POSE_RIGHT_WRIST]) {
+        if (!filterPoses.length || !filterPoses[0].keypoints[POSE_RIGHT_WRIST]) {
           redSquare = null;
           mouseCoords = null;
         } else {
-          let rwrist = filterPoses[0][POSE_RIGHT_WRIST];
-          if (!redSquare) {
-            redSquare = new PIXI.Sprite(PIXI.Texture.WHITE);
-            redSquare.position.set(0, 0);
-            redSquare.width = 100;
-            redSquare.height = 100;
-            redSquare.tint = "0xFF0000";
-            redSquare.acceleration = new PIXI.Point(0);
-            redSquare.mass = 1;
-            mouseCoords = new PIXI.Point(rwrist.position.x, rwrist.position.y);
+          let rwrist = filterPoses[0].keypoints[POSE_RIGHT_WRIST];
+
+          if (rwrist.score > 0.3) {
+            if (!redSquare) {
+              redSquare = new PIXI.Sprite(PIXI.Texture.WHITE);
+              redSquare.position.set(0, 0);
+              redSquare.width = 100;
+              redSquare.height = 100;
+              redSquare.tint = "0xFF0000";
+              redSquare.acceleration = new PIXI.Point(0);
+              redSquare.mass = 1;
+              mouseCoords = new PIXI.Point(
+                rwrist.position.x,
+                rwrist.position.y
+              );
+            }
+            mouseCoords.x = rwrist.position.x;
+            mouseCoords.y = rwrist.position.y;
           }
-          mouseCoords.x = rwrist.position.x;
-          mouseCoords.y = rwrist.position.y;
         }
       }
     },
@@ -213,7 +220,6 @@ export default function (videoElement, canvasElement, net, $Vue) {
       scope.updateMousePosition(redSquare.x, redSquare.y);
       console.log(redSquare.x, redSquare.y);
     }
-    console.log('233');
   });
 
   // create a texture from
