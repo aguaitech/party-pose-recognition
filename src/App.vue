@@ -38,7 +38,7 @@ import driftMode from "./components/drift";
 import circlesMode from "./components/circles";
 import mixedMode from "./components/mixed";
 import liquidMode from "./components/liquid";
-import scopeMode from "./components/kaleidoscope";
+import scopeMode from "./components/kaleidoscopev2";
 
 
 let net = null,

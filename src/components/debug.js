@@ -35,11 +35,13 @@ export default function (videoElement, canvasElement, net, $Vue) {
 
         const myrng = new seedrandom(666)
 
-        for (let pose of poses) {
+        let tmp_poses = poses.filter(pose => pose.score > 0.2)
+
+        for (let pose of tmp_poses) {
           const hue = Math.round(myrng.quick() * 360)
           const color = `hsl(${hue},100%,50%)`
-          drawConnectors(canvasCtx, pose.keypoints.map(point => ({ x: point.position.x / canvasElement.width, y: point.position.y / canvasElement.height })), POSE_CONNECTIONS, { color: '#ffffff', lineWidth: 5 })
-          drawLandmarks(canvasCtx, pose.keypoints.map(point => ({ x: point.position.x / canvasElement.width, y: point.position.y / canvasElement.height })), { color, fillColor: color, radius: 5 })
+          drawConnectors(canvasCtx, [].map(point => ({ x: point.position.x / canvasElement.width, y: point.position.y / canvasElement.height })), POSE_CONNECTIONS, { color: '#ffffff', lineWidth: 5 })
+          drawLandmarks(canvasCtx, [pose.keypoints[10]].map(point => ({ x: point.position.x / canvasElement.width, y: point.position.y / canvasElement.height })), { color, fillColor: color, radius: 5 })
         }
       }
     },
