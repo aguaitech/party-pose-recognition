@@ -79,10 +79,9 @@ class Kaleidoscope {
       for (let i = 0; i < this.spriteTiles.length; i++) {
         if (this.interactiveMode) {
           // this.spriteTiles[i].tilePosition.x = this.mouseX + Math.sin(this.count);
-          this.spriteTiles[i].tilePosition.x = this.mouseX  + this.count;
+          this.spriteTiles[i].tilePosition.x = this.mouseX + this.count;
           // this.spriteTiles[i].tilePosition.y = this.mouseY + Math.cos(this.count);
-          this.spriteTiles[i].tilePosition.y = this.mouseY  + this.count;
-          console.log(this.mouseX, this.mouseY, this.count);
+          this.spriteTiles[i].tilePosition.y = this.mouseY + this.count;
           // this.mouseX = 0;
           // this.mouseY = 0;
         } else {
