@@ -1,6 +1,17 @@
 <template>
   <p>{{ fpsCount }} fps, {{ peopleCount }} people</p>
   <p>
+    Choose Camera:
+    <el-select v-model="camera" placeholder="Select Camera" size="large">
+      <el-option
+        v-for="item in cameraOptions"
+        :key="item.deviceId"
+        :label="item.label"
+        :value="item.deviceId"
+      />
+    </el-select>
+  </p>
+  <p>
     Choose display mode:
     <el-radio-group v-model="mode" size="large">
       <el-radio-button label="Debug" />
@@ -51,6 +62,8 @@ export default {
       peopleCount: 0,
       mode: "Debug",
       precision: "mid",
+      camera: "",
+      cameraOptions: [],
     };
   },
   watch: {
@@ -79,6 +92,9 @@ export default {
       }
       this.mountMode();
     },
+    camera() {
+      this.mountMode();
+    },
   },
   methods: {
     async mountMode() {
@@ -102,31 +118,55 @@ export default {
 
       switch (this.mode) {
         case "Debug":
-          stop = debugMode(videoElement, canvasElement, net, this);
+          stop = debugMode(videoElement, canvasElement, net, this, this.camera);
           break;
         case "Avatar":
-          stop = avatarMode(videoElement, canvasElement, net, this);
+          stop = avatarMode(
+            videoElement,
+            canvasElement,
+            net,
+            this,
+            this.camera
+          );
           break;
         case "Drift":
-          stop = driftMode(videoElement, canvasElement, net, this);
+          stop = driftMode(videoElement, canvasElement, net, this, this.camera);
           break;
         case "Circles":
-          stop = circlesMode(videoElement, canvasElement, net, this);
+          stop = circlesMode(
+            videoElement,
+            canvasElement,
+            net,
+            this,
+            this.camera
+          );
           break;
         case "Mixed":
-          stop = mixedMode(videoElement, canvasElement, net, this);
+          stop = mixedMode(videoElement, canvasElement, net, this, this.camera);
           break;
         case "Liquid":
-          stop = liquidMode(videoElement, canvasElement, net, this);
+          stop = liquidMode(
+            videoElement,
+            canvasElement,
+            net,
+            this,
+            this.camera
+          );
           break;
         case "Scope":
-          stop = scopeMode(videoElement, canvasElement, net, this);
+          stop = scopeMode(videoElement, canvasElement, net, this, this.camera);
           break;
       }
     },
   },
   async mounted() {
     net = await loadNet(); // Prevent observation on net properties
+
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    this.cameraOptions = devices.filter(
+      (device) => device.kind === "videoinput"
+    );
+    this.camera = this.cameraOptions[0]?.deviceId || "";
 
     this.mountMode();
   },

@@ -10,7 +10,6 @@ import { Camera } from "@mediapipe/camera_utils";
 // import seedrandom from "seedrandom";
 import * as PIXI from "pixi.js";
 import color from "color";
-import SimplexNoise from "simplex-noise";
 
 // class Drop {
 //   cx = 0;
@@ -40,15 +39,138 @@ import SimplexNoise from "simplex-noise";
 //   }
 // }
 
+class Wind {
+  windMap = null;
+  width = 1081;
+  height = 1080;
+  maxWind = 30000;
+  kernel = 1081;
+  subStep = 3;
+  centroids = 2;
+  alpha = 0.99;
+
+  min = Infinity;
+  max = -Infinity;
+  normalizedMap = null;
+
+  next() {
+    if (this.windMap) {
+      this.windMap = this.windMap.map((row) => row.map((x) => x * this.alpha));
+    } else {
+      this.windMap = Array(this.width)
+        .fill(0)
+        .map(() => Array(this.height).fill(0));
+    }
+    const cent = Array(this.centroids)
+      .fill(0)
+      .map(() => [Math.random() * this.width, Math.random() * this.height]);
+    for (let [i, j] of cent) {
+      const factor = (Math.random() - 0.5) * this.maxWind;
+      for (let m = -this.kernel / 2; m < this.kernel / 2; m++) {
+        for (let n = -this.kernel / 2; n < this.kernel / 2; n++) {
+          const x = Math.floor(i + m);
+          const y = Math.floor(j + n);
+          if (x < 0 || x >= this.width || y < 0 || y >= this.height) continue;
+          this.windMap[x][y] +=
+            (factor / ((this.kernel / 8) * Math.sqrt(2 * Math.PI))) *
+            Math.exp(-(m * m + n * n) / ((this.kernel * this.kernel) / 32));
+        }
+      }
+    }
+    this.min = Infinity;
+    this.max = -Infinity;
+    this.normalizedMap = null;
+  }
+
+  getWind(x, y) {
+    if (!this.windMap) this.next();
+    if (x >= this.width) x = this.width - 1;
+    if (y >= this.height) y = this.height - 1;
+    if (x < 0) x = 0;
+    if (y < 0) y = 0;
+    x = Math.floor(x);
+    y = Math.floor(y);
+    let sx = 0,
+      sy = 0;
+    //let counterX = 0,
+    // counterY = 0;
+    for (let i = -3; i <= 3; i++) {
+      for (let j = -3; j <= 3; j++) {
+        if (
+          x + i < 0 ||
+          x + i >= this.width ||
+          y + j < 0 ||
+          y + j >= this.height
+        )
+          continue;
+        // if (i != 0) counterX++;
+        // if (j != 0) counterY++;
+        if (i != 0) sx += (this.windMap[x][y] - this.windMap[x + i][y + j]) / i;
+        if (j != 0) sy += (this.windMap[x][y] - this.windMap[x + i][y + j]) / j;
+      }
+    }
+    return [-sy, sx];
+  }
+
+  getMinMax() {
+    if (!this.windMap) this.next();
+    if (this.min == Infinity && this.max == -Infinity) {
+      const [min, max] = this.windMap.reduce(
+        (p, v) => {
+          const [min, max] = v.reduce(
+            (p, v) => [Math.min(p[0], v), Math.max(p[1], v)],
+            [Infinity, -Infinity]
+          );
+          return [Math.min(p[0], min), Math.max(p[1], max)];
+        },
+        [Infinity, -Infinity]
+      );
+      this.min = min;
+      this.max = max;
+    }
+    return [this.min, this.max];
+  }
+
+  getNormalizedMap() {
+    if (!this.windMap) this.next();
+    if (this.normalizedMap) return this.normalizedMap;
+    else {
+      const [min, max] = this.getMinMax();
+      this.normalizedMap = this.windMap.map((row) =>
+        row.map((v) => (v - min) / (max - min))
+      );
+      return this.normalizedMap;
+    }
+  }
+
+  getContourLine(height, threshold) {
+    if (!this.windMap) this.next();
+    const normalizedMap = this.getNormalizedMap();
+    const rows = normalizedMap.length,
+      cols = normalizedMap[0].length;
+    const bitmap = [];
+    for (let i = 0; i < rows; i++) {
+      for (let j = 0; j < cols; j++) {
+        if (
+          normalizedMap[i][j] >= height - threshold &&
+          normalizedMap[i][j] <= height + threshold
+        ) {
+          bitmap.push([i, j]);
+        }
+      }
+    }
+    return bitmap;
+  }
+}
+
 /**
  *
  * @param {HTMLVideoElement} videoElement
  * @param {HTMLCanvasElement} canvasElement
  * @param {import("@tensorflow-models/posenet").PoseNet} net
  * @param {import("vue").DefineComponent} $Vue
- * @param {string} deviceId
  */
-export default function (videoElement, canvasElement, net, $Vue, deviceId) {
+export default function (videoElement, canvasElement, net, $Vue) {
   // const canvasCtx = canvasElement.getContext("2d");
 
   const app = new PIXI.Application({
@@ -66,17 +188,18 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
   const colorCache = [];
 
   for (let i = 0; i < 100; i++) {
-    const c = parseInt(
-      color(
-        `hsl(${283 * (1 - i / 100) + (283 * i) / 100}, ${
-          0 * (1 - i / 100) + (50 * i) / 100
-        }%, ${0 * (1 - i / 100) + (47 * i) / 100}%)`
+    colorCache.push(
+      parseInt(
+        color(
+          `hsl(${283 * (1 - i / 100) + (283 * i) / 100}, ${
+            0 * (1 - i / 100) + (50 * i) / 100
+          }%, ${0 * (1 - i / 100) + (47 * i) / 100}%)`
+        )
+          .hex()
+          .slice(1),
+        16
       )
-        .hex()
-        .slice(1),
-      16
     );
-    colorCache.push([c >> 16, (c >> 8) & 0xff, c & 0xff]);
   }
 
   let counter = 0;
@@ -103,7 +226,6 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
   });
 
   const camera = new Camera(videoElement, {
-    deviceId,
     onFrame: async () => {
       if (net) {
         // counter++;
@@ -191,18 +313,18 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
   camera.start();
 
   // create an array to store all the sprites
-  // const maggots = [];
+  const maggots = [];
 
   const totalSprites = 1081 * 1080;
 
-  // const particles = new PIXI.ParticleContainer(totalSprites, {
-  //   position: false,
-  //   uvs: false,
-  //   vertices: false,
-  //   rotation: false,
-  //   tint: true,
-  // });
-  // app.stage.addChild(particles);
+  const particles = new PIXI.ParticleContainer(totalSprites, {
+    position: false,
+    uvs: false,
+    vertices: false,
+    rotation: false,
+    tint: true,
+  });
+  app.stage.addChild(particles);
   app.stage.addChild(particles2);
 
   const circleBase = new PIXI.Graphics();
@@ -210,39 +332,23 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
   circleBase.drawCircle(0, 0, 1);
   const circleTexture = app.renderer.generateTexture(circleBase);
 
-  const wind = new SimplexNoise();
-
-  const uArray = new Uint8Array(totalSprites * 4);
+  const wind = new Wind();
 
   for (let i = 0; i < 1081; i++) {
     for (let j = 0; j < 1080; j++) {
-      uArray[(i * 1080 + j) * 4] = 0;
-      uArray[(i * 1080 + j) * 4 + 1] = 0;
-      uArray[(i * 1080 + j) * 4 + 2] = 0;
-      uArray[(i * 1080 + j) * 4 + 3] = 255;
+      const dude = new PIXI.Sprite(circleTexture);
 
-      // const dude = new PIXI.Sprite(circleTexture);
+      dude.position.set(i, j);
 
-      // dude.position.set(i, j);
+      dude.tint = colorCache[Math.round(wind.getNormalizedMap()[i][j] * 99)];
 
-      // dude.tint =
-      //   colorCache[
-      //     Math.round(
-      //       wind.noise3D((i / 1081) * 16, (j / 1080) * 16, counter / 32) * 99
-      //     )
-      //   ];
+      maggots.push(dude);
 
-      // maggots.push(dude);
-
-      // particles.addChild(dude);
+      particles.addChild(dude);
     }
   }
 
-  const texture = PIXI.Texture.fromBuffer(uArray, 1081, 1080);
-  const BG = new PIXI.Sprite(texture);
-  app.stage.addChild(BG);
-
-  // let oldCache = null;
+  let oldCache = null;
 
   var g_TICK = 1000 / 30; // 1000/40 = 25 frames per second
   var g_Time = 0;
@@ -255,59 +361,44 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
     // We are now meeting the frame rate, so reset the last time the animation is done
     g_Time = timeNow;
 
-    const noiseArray = new Uint8Array(1081 * 1080);
-    for (let i = 0; i < 1081; i++) {
-      for (let j = 0; j < 1080; j++) {
-        noiseArray[i * 1080 + j] = Math.min(
-          Math.max(
-            0,
-            Math.round(
-              wind.noise3D((i / 1081) * 2, (j / 1080) * 2, counter / 32) * 99
-            )
-          ),
-          99
-        );
-      }
+    if (counter % 10 === 0) {
+      oldCache = wind.getNormalizedMap();
+      wind.next();
     }
-
-    // if (counter % 10 === 0) {
-    //   oldCache = wind.getNormalizedMap();
-    // wind.next();
-    // }
     // wind.next();
     // iterate through the sprites and update their position
-    // for (let i = 0; i < drops.length; i++) {
-    //   const dude = drops[i];
-    //   let [vx, vy] = wind.getWind(dude.position.x, dude.position.y);
-    //   const norm = Math.max(Math.sqrt(vx * vx + vy * vy), 0.000001);
-    //   dude.position.set(
-    //     dude.position.x + vx / norm,
-    //     dude.position.y + vy / norm
-    //   );
-    //   dude.alpha = dude.alpha * 0.999;
-    //   dude.scale.set(dude.scale.x * 0.999);
-    // }
+    for (let i = 0; i < drops.length; i++) {
+      const dude = drops[i];
+      let [vx, vy] = wind.getWind(dude.position.x, dude.position.y);
+      const norm = Math.max(Math.sqrt(vx * vx + vy * vy), 0.000001);
+      dude.position.set(
+        dude.position.x + vx / norm,
+        dude.position.y + vy / norm
+      );
+      dude.alpha = dude.alpha * 0.999;
+      dude.scale.set(dude.scale.x * 0.999);
+    }
 
     for (let i = 0; i < 1081; i++) {
       for (let j = 0; j < 1080; j++) {
-        const noise = noiseArray[i * 1080 + j];
-        // if (noise % 9 === 0 && noise !== 0) {
-        //   uArray[(i * 1081 + j) * 4] = 255;
-        //   uArray[(i * 1081 + j) * 4 + 1] = 255;
-        //   uArray[(i * 1081 + j) * 4 + 2] = 255;
-        // } else {
-        //   uArray[(i * 1081 + j) * 4] = 0;
-        //   uArray[(i * 1081 + j) * 4 + 1] = 0;
-        //   uArray[(i * 1081 + j) * 4 + 2] = 0;
-        // }
-        uArray[(i * 1081 + j) * 4] = colorCache[noise][0];
-        uArray[(i * 1081 + j) * 4 + 1] = colorCache[noise][1];
-        uArray[(i * 1081 + j) * 4 + 2] = colorCache[noise][2];
-        uArray[(i * 1081 + j) * 4 + 3] = 255;
+        const dude = maggots[i * 1080 + j];
+
+        if (oldCache) {
+          dude.tint =
+            colorCache[
+              Math.round(
+                ((wind.getNormalizedMap()[i][j] * (counter % 10)) / 10 +
+                  oldCache[i][j] * (1 - (counter % 10) / 10)) *
+                  99
+              )
+            ];
+        } else {
+          dude.tint =
+            colorCache[Math.round(wind.getNormalizedMap()[i][j] * 99)];
+        }
       }
     }
 
-    texture.update();
     counter++;
 
     // for (let i = 0; i < drops.length; i++) {

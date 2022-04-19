@@ -50,11 +50,13 @@ function normalizePoints(
  * @param {HTMLCanvasElement} canvasElement
  * @param {import("@tensorflow-models/posenet").PoseNet} net
  * @param {import("vue").DefineComponent} $Vue
+ * @param {string} deviceId
  */
-export default function (videoElement, canvasElement, net, $Vue) {
+export default function (videoElement, canvasElement, net, $Vue, deviceId) {
   const canvasCtx = canvasElement.getContext("2d");
 
   const camera = new Camera(videoElement, {
+    deviceId,
     onFrame: async () => {
       if (net) {
         let startTime = Date.now();
