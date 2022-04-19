@@ -68,9 +68,9 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
   for (let i = 0; i < 100; i++) {
     const c = parseInt(
       color(
-        `hsl(${283 * (1 - i / 100) + (283 * i) / 100}, ${
-          0 * (1 - i / 100) + (50 * i) / 100
-        }%, ${0 * (1 - i / 100) + (47 * i) / 100}%)`
+        `hsl(${206 * (1 - i / 100) + (199 * i) / 100}, ${
+          82 * (1 - i / 100) + (85 * i) / 100
+        }%, ${34 * (1 - i / 100) + (71 * i) / 100}%)`
       )
         .hex()
         .slice(1),
@@ -203,7 +203,6 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
   //   tint: true,
   // });
   // app.stage.addChild(particles);
-  app.stage.addChild(particles2);
 
   const circleBase = new PIXI.Graphics();
   circleBase.lineStyle({ width: 1, color: 0xffffff });
@@ -242,6 +241,8 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
   const BG = new PIXI.Sprite(texture);
   app.stage.addChild(BG);
 
+  app.stage.addChild(particles2);
+
   // let oldCache = null;
 
   var g_TICK = 1000 / 30; // 1000/40 = 25 frames per second
@@ -262,7 +263,7 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
           Math.max(
             0,
             Math.round(
-              wind.noise3D((i / 1081) * 2, (j / 1080) * 2, counter / 32) * 99
+              wind.noise3D((i / 1081) * 4, (j / 1080) * 4, counter / 100) * 99
             )
           ),
           99
@@ -270,23 +271,53 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
       }
     }
 
+    const getWind = (x, y) => {
+      if (x >= 1081) x = 1081 - 1;
+      if (y >= 1080) y = 1080 - 1;
+      if (x < 0) x = 0;
+      if (y < 0) y = 0;
+      x = Math.floor(x);
+      y = Math.floor(y);
+      let sx = 0,
+        sy = 0;
+      //let counterX = 0,
+      // counterY = 0;
+      for (let i = -3; i <= 3; i++) {
+        for (let j = -3; j <= 3; j++) {
+          if (x + i < 0 || x + i >= 1081 || y + j < 0 || y + j >= 1080)
+            continue;
+          // if (i != 0) counterX++;
+          // if (j != 0) counterY++;
+          if (i != 0)
+            sx +=
+              (noiseArray[x * 1080 + y] - noiseArray[(x + i) * 1080 + y + j]) /
+              i;
+          if (j != 0)
+            sy +=
+              (noiseArray[x * 1080 + y] - noiseArray[(x + i) * 1080 + y + j]) /
+              j;
+        }
+      }
+      return [-sy, sx];
+    };
+
     // if (counter % 10 === 0) {
     //   oldCache = wind.getNormalizedMap();
     // wind.next();
     // }
     // wind.next();
     // iterate through the sprites and update their position
-    // for (let i = 0; i < drops.length; i++) {
-    //   const dude = drops[i];
-    //   let [vx, vy] = wind.getWind(dude.position.x, dude.position.y);
-    //   const norm = Math.max(Math.sqrt(vx * vx + vy * vy), 0.000001);
-    //   dude.position.set(
-    //     dude.position.x + vx / norm,
-    //     dude.position.y + vy / norm
-    //   );
-    //   dude.alpha = dude.alpha * 0.999;
-    //   dude.scale.set(dude.scale.x * 0.999);
-    // }
+    for (let i = 0; i < drops.length; i++) {
+      const dude = drops[i];
+      let [vx, vy] = getWind(dude.position.x, dude.position.y);
+      const norm = Math.max(Math.sqrt(vx * vx + vy * vy), 0.000001);
+      dude.position.set(
+        dude.position.x + vx / norm,
+        dude.position.y + vy / norm
+      );
+      dude.alpha = dude.alpha * 0.999;
+      dude.scale.set(dude.scale.x * 0.999);
+    }
 
     for (let i = 0; i < 1081; i++) {
       for (let j = 0; j < 1080; j++) {
