@@ -124,17 +124,20 @@ class Kaleidoscope {
         let v = 0.0;
         console.log(this.mouses);
         for (let j = 0; j < this.mouses.length; j++) {
-          v = Math.max(v, 1 -
+          v = Math.max(
+            v,
+            1 -
               Math.sqrt(
                 Math.pow(this.mouses[j].x - this.spriteTiles[i].parent.x, 2) +
                   Math.pow(this.mouses[j].y - this.spriteTiles[i].parent.y, 2)
               ) /
-                Math.sqrt(Math.pow(this.width, 2) + Math.pow(this.height, 2)));
+                Math.sqrt(Math.pow(this.width, 2) + Math.pow(this.height, 2))
+          );
         }
-        if(!this.mouses) v= 1;
+        if (!this.mouses) v = 1;
         else {
           v = v * v;
-          if (v > 0.2) v =  v * v * v;
+          if (v > 0.2) v = v * v * v;
           else v = 0;
         }
         this.spriteTiles[i].alpha = v;
@@ -164,7 +167,7 @@ class Kaleidoscope {
  * @param {import("@tensorflow-models/posenet").PoseNet} net
  * @param {import("vue").DefineComponent} $Vue
  */
-export default function (videoElement, canvasElement, net, $Vue) {
+export default function (videoElement, canvasElement, net, $Vue, deviceId) {
   // const canvasCtx = canvasElement.getContext("2d");
 
   const app = new PIXI.Application({
@@ -182,6 +185,7 @@ export default function (videoElement, canvasElement, net, $Vue) {
   scope.draw();
 
   const camera = new Camera(videoElement, {
+    deviceId,
     onFrame: async () => {
       if (net) {
         let startTime = Date.now();
@@ -275,7 +279,10 @@ export default function (videoElement, canvasElement, net, $Vue) {
 
       redSquare.x += redSquare.acceleration.x * delta;
       redSquare.y += redSquare.acceleration.y * delta;
-      scope.updateMousePosition(redSquare.x, redSquare.y, [...mouses, {x: 0, y:0}]);
+      scope.updateMousePosition(redSquare.x, redSquare.y, [
+        ...mouses,
+        { x: 0, y: 0 },
+      ]);
     }
   });
 
