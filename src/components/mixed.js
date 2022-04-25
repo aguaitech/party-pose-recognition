@@ -240,6 +240,8 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
   const circles = [];
   let counter = 0;
   const scale = 1081 / 2;
+  const transferFactor = 0.3;
+  let headPos = [];
 
   const sticks = [];
 
@@ -262,7 +264,7 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
   });
 
   const circleBase = new PIXI.Graphics();
-  circleBase.lineStyle({ width: 5, color: 0xffffff });
+  circleBase.lineStyle({ width: 10, color: 0xffffff });
 
   for (let vi = 0; vi <= vertexCnt; vi++) {
     const thetaV = (vi / vertexCnt) * Math.PI * 2;
@@ -274,8 +276,27 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
       circleBase.lineTo(x, y);
     }
   }
-
   const circleTexture = app.renderer.generateTexture(circleBase);
+
+  const otherBase = [];
+  otherBase.push(circleTexture);
+  for(let i = 0; i < 5; i ++) {
+
+    let cb = new PIXI.Graphics();
+    cb.lineStyle({ width: 10, color: 0xffffff });
+    const vc = i + 3;
+    for (let vi = 0; vi <= vc; vi++) {
+      const thetaV = (vi / vc) * Math.PI * 2;
+      const x = Math.cos(thetaV) * scale;
+      const y = Math.sin(thetaV) * scale;
+      if (vi == 0) {
+        cb.moveTo(x, y);
+      } else {
+        cb.lineTo(x, y);
+      }
+    }
+    otherBase.push(app.renderer.generateTexture(cb));
+  }
 
   for (let i = 0; i < circleCnt; i++) {
     const circle = new PIXI.Sprite(circleTexture);
@@ -298,6 +319,35 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
     particles.addChild(circle);
   }
 
+  async function resetTexture(num) {
+    let p = Math.min(num, 5);
+    console.log(num, p);
+
+    for(let c of circles) {
+      c.texture = otherBase[p]
+    }
+  }
+
+  function transferPos(pos, refs) {
+    if(!refs.length) return pos;
+
+    let idx = -1, min_d;
+    
+    for (let i = 0; i < refs.length; i++) {
+      const ref = refs[i];
+      const dis = Math.sqrt((pos[0] - ref[0]) ** 2 + (pos[1] - ref[1]) ** 2);
+
+      if(idx == -1 || min_d > dis) {
+        idx = i;
+        min_d = dis;
+      }
+    }
+
+    return [pos[0] + (refs[idx][0] - pos[0]) * transferFactor, pos[1] + (refs[idx][1] - pos[1]) * transferFactor];
+  }
+
+  let latestNum = 0;
+
   const camera = new Camera(videoElement, {
     deviceId,
     onFrame: async () => {
@@ -306,10 +356,19 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
         const poses = await net.estimateMultiplePoses(videoElement, {
           maxDetections: 64,
         });
-
         let endTime = Date.now();
         $Vue.fpsCount = Math.round(1000 / (endTime - startTime));
         $Vue.peopleCount = poses.length;
+
+        let filteredPoses = poses.filter(pose => pose.score > 0.3);
+
+        if (latestNum != filteredPoses.length) {
+          latestNum = filteredPoses.length;
+          resetTexture(latestNum);
+        }
+
+        headPos = filteredPoses.map(pose => [pose.keypoints[0].position.x, pose.keypoints[0].position.y]);
+
       }
     },
     width: 1081,
@@ -361,7 +420,7 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
 
       const circleSize = getSizeByTheta(thetaC, time, scale);
 
-      circle.position.set(...getCenterByTheta(thetaC, time, scale));
+      circle.position.set(...transferPos(getCenterByTheta(thetaC, time, scale), headPos));
       circle.scale.set(circleSize / scale);
 
       const circleColor = getColorByTheta(thetaC, time);
