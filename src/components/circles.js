@@ -12,14 +12,31 @@ import { Camera } from "@mediapipe/camera_utils";
 import * as PIXI from "pixi.js";
 // import color from "color";
 
-const MAX_CIRCLE_CNT = 2500,
+const MAX_CIRCLE_CNT = 500,
   MIN_CIRCLE_CNT = 100;
-//const MAX_VERTEX_CNT = 30,
-// MIN_VERTEX_CNT = 3;
-const BG_OPACITY = 0.3;
+const MAX_VERTEX_CNT = 30;
+  // MIN_VERTEX_CNT = 3;
+const BG_OPACITY = 0.4;
+// const width = 1081,
+//   height = 1080;
 
-let circleCnt = 2500,
-  vertexCnt = 30;
+let circleCnt = MAX_CIRCLE_CNT, vertexCnt = MAX_VERTEX_CNT;
+// let mouseX = 0, mouseY = 0;
+
+
+// function linear(x, st, ed, sst, eed) {
+//   return (x - st) / (ed - st) * (eed - sst) + st;
+// }
+
+// function updateCntByMouse() {
+//   let xoffset = Math.abs(mouseX - width / 2);
+//   let yoffset = Math.abs(mouseY - height / 2);
+//   circleCnt = Math.round(linear(xoffset, 0, width / 2, MAX_CIRCLE_CNT, MIN_CIRCLE_CNT));
+//   vertexCnt = Math.round(linear(yoffset, 0, height / 2, MAX_VERTEX_CNT, MIN_VERTEX_CNT));
+// }
+
+// let circleCnt = 2500,
+  // vertexCnt = 30;
 
 function getCenterByTheta(theta, time, scale) {
   const direction = [Math.cos(theta), Math.sin(theta)];
@@ -43,9 +60,10 @@ function getColorByTheta(theta, time) {
     b = 0.6 + 0.4 * Math.cos(th - (Math.PI * 2) / 3),
     a =
       ((circleCnt - MIN_CIRCLE_CNT) / (MAX_CIRCLE_CNT - MIN_CIRCLE_CNT)) *
-        (0.3 - 1.5) +
-      1.5;
-  return [r * 255, g * 255, b * 255, a];
+        (30 / 255 - 150 / 255) +
+      150 ;
+
+  return [r * 255, g * 255, b * 255, a / 255];
 }
 
 /**
@@ -79,7 +97,7 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
   app.stage.addChild(particles);
 
   const circleBase = new PIXI.Graphics();
-  circleBase.lineStyle({ width: 5, color: 0xffffff });
+  circleBase.lineStyle({ width: 10, color: 0xffffff });
 
   for (let vi = 0; vi <= vertexCnt; vi++) {
     const thetaV = (vi / vertexCnt) * Math.PI * 2;
@@ -146,10 +164,11 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
     g_Time = timeNow;
 
     counter++;
+    // updateCntByMouse();
     for (const i in circles) {
       const circle = circles[i];
 
-      const time = counter / 20;
+      const time = counter / 15;
       const thetaC = (i / circleCnt) * Math.PI * 2;
 
       const circleSize = getSizeByTheta(thetaC, time, scale);

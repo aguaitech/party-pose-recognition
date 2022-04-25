@@ -60,7 +60,7 @@ export default {
     return {
       fpsCount: 0,
       peopleCount: 0,
-      mode: "Scope",
+      mode: "Circles",
       precision: "mid",
       camera: "",
       cameraOptions: [],
