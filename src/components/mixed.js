@@ -11,7 +11,7 @@ import { Camera } from "@mediapipe/camera_utils";
 // import seedrandom from "seedrandom";
 import * as PIXI from "pixi.js";
 import color from "color";
-import { POSE_RIGHT_WRIST } from "@/core/constant";
+import { POSE_LEFT_WRIST, POSE_RIGHT_WRIST } from "@/core/constant";
 
 class Stick {
   cx = 0;
@@ -185,13 +185,13 @@ class Wind {
   }
 }
 
-const MAX_CIRCLE_CNT = 1000;
+const MAX_CIRCLE_CNT = 2000;
 const MIN_CIRCLE_CNT = 100;
 //const MAX_VERTEX_CNT = 30,
 // MIN_VERTEX_CNT = 3;
 const BG_OPACITY = 1;
 
-let circleCnt = 750,
+let circleCnt = 2000,
   vertexCnt = 30;
 
 function getCenterByTheta(theta, time, scale) {
@@ -245,6 +245,7 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
   const transferFactor = 0.3;
   let headPos = [];
   let rightHandPos = [];
+  let hightestLeftHand = 0;
   const circleLineWidth = 5;
 
   const sticks = [];
@@ -377,6 +378,9 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
         headPos = filteredPoses.map(pose => [pose.keypoints[0].position.x, pose.keypoints[0].position.y]);
         rightHandPos = filteredPoses.map(pose => [pose.keypoints[POSE_RIGHT_WRIST].position.x, pose.keypoints[POSE_RIGHT_WRIST].position.y])
 
+
+        hightestLeftHand = Math.max(...filteredPoses.map(pose => pose.keypoints[POSE_LEFT_WRIST].position.y));
+
       }
     },
     width: 1081,
@@ -413,7 +417,7 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
 
     maggots.push(dude);
 
-    // particles2.addChild(dude);
+    particles2.addChild(dude);
   }
 
   const wind = new Wind();
@@ -447,7 +451,7 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
     for (let i = 0; i < maggots.length; i++) {
       const dude = maggots[i];
       sticks[i].blow(...wind.getWind(sticks[i].cx, sticks[i].cy));
-      dude.alpha = Math.sin((sticks[i].phi / 180) * Math.PI) * 0.4;
+      dude.alpha = Math.sin((sticks[i].phi / 180) * Math.PI) * (1 - hightestLeftHand / 1081 + 0.2);
       dude.angle = sticks[i].rho;
       dude.tint = parseInt(
         color(`hsl(${sticks[i].rho.toFixed(6)},100%,50%)`)
