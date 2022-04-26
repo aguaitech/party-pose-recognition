@@ -295,7 +295,7 @@ let draw = () => {regl({
         c1 = c3;
         t.x = t.z;
       }
-      c1 = c1 * 0.3;
+      c1 = c1 * 0.5;
       circleCenter = circleCenter + c1;
       // Modulate the circle sizes around the circle and in time
       float circleSize = 0.2 + 0.12 * cos(theta * 9.0 - time * 2.0);
@@ -386,10 +386,15 @@ let draw = () => {regl({
 
         if (latestNum != filteredPoses.length) {
           latestNum = filteredPoses.length;
-          if(latestNum)
+          if(latestNum) {
             numCircleDivisions = latestNum + 2;
-          else
+            peopleCount = Math.min(4, latestNum);
+          }
+
+          else {
             numCircleDivisions = 10;
+            peopleCount = 0;
+          }
           circleInstanceGeometry = Array.from(Array(numCircleDivisions + 1).keys()).map(i => {
             var theta = Math.PI * 2 * i / numCircleDivisions;
             return [Math.cos(theta), Math.sin(theta)];
@@ -398,9 +403,6 @@ let draw = () => {regl({
           instanceTheta = Array.from(Array(numCircleInstances).keys()).map(i => 
             i / numCircleInstances * 2 * Math.PI
           );
-
-          peopleCount = Math.min(4, latestNum);
-          peopleCount = 1;
         }
 
         coords = Array.from(Array(8).keys()).map( () => 10 );
