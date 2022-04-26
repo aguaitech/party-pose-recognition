@@ -12,6 +12,7 @@ import { Camera } from "@mediapipe/camera_utils";
 import * as PIXI from "pixi.js";
 import color from "color";
 import { POSE_LEFT_WRIST, POSE_RIGHT_WRIST } from "@/core/constant";
+const createREGL = require('regl')
 
 class Stick {
   cx = 0;
@@ -185,6 +186,41 @@ class Wind {
   }
 }
 
+let numCircleDivisions = 10;
+const numCircleInstances = 10000;
+
+
+
+
+let circleInstanceGeometry = Array.from(Array(numCircleDivisions + 1).keys()).map(i => {
+  var theta = Math.PI * 2 * i / numCircleDivisions;
+  return [Math.cos(theta), Math.sin(theta)];
+
+});
+
+let instanceTheta = Array.from(Array(numCircleInstances).keys()).map(i => 
+  i / numCircleInstances * 2 * Math.PI
+);
+
+let coords = Array.from(Array(8).keys()).map( () => 10);
+let targetAlpha = Array.from(Array(4).keys()).map(() => 0.0);
+
+let peopleCount = 0;
+
+// function reglCanvas (width, height, dpi, reglOptions) {
+//   dpi = dpi === undefined ? devicePixelRatio : dpi;
+//   reglOptions = reglOptions || {}
+//   var canvas = document.createElement("canvas");
+//   canvas.width = dpi * width;
+//   canvas.height = dpi * height;
+//   canvas.style.width = width + "px";
+//   const regl = createREGL(Object.assign({}, reglOptions, {pixelRatio: dpi, canvas}));
+//   canvas.value = regl;
+//   canvas.__reglConfig = {dpi, reglOptions}
+//   return canvas;
+// }
+
+
 const MAX_CIRCLE_CNT = 2000;
 const MIN_CIRCLE_CNT = 100;
 //const MAX_VERTEX_CNT = 30,
@@ -251,6 +287,132 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
   const sticks = [];
 
   // let counter = 0;
+
+  const reglOptions = {
+    extensions: ['ANGLE_instanced_arrays'],
+    attributes: { antialias: true, depth: false}
+  };
+  const dpi = 1.5;
+  const canvas = document.createElement("canvas")
+
+  const regl = createREGL(Object.assign({}, reglOptions, {pixelRatio: dpi, canvas: canvas}));
+  canvas.value = regl;
+  canvas.__reglConfig = {dpi, reglOptions}
+
+  canvas.width = 1081;
+  canvas.height = 1080;
+  canvas.style.position = 'absolute';
+  document.querySelector(".output_canvas").appendChild(canvas);
+
+
+let draw = () => {regl({
+  vert: `
+    #define numTextures 4
+    precision highp float;
+    attribute float theta;
+    attribute vec2 circlePoint;
+    varying vec3 vColor;
+    varying float aa;
+    uniform vec2 aspectRatio;
+    uniform float time;
+    uniform vec4 otP;
+    uniform vec4 tfP;
+    uniform vec4 ta;
+    uniform int num;
+    const float PI = 3.1415926535;
+    void main () {
+      // Use lots of sines and cosines to place the circles
+      vec2 circleCenter = vec2(cos(theta), sin(theta))
+        * (0.6 + 0.2 * cos(theta * 6.0 + cos(theta * 8.0 + time)));
+
+      vec2 c1 = otP.xy;
+      vec2 c2 = otP.zw;
+      vec2 c3 = tfP.xy;
+      vec2 c4 = tfP.zw;
+      vec4 t = ta;
+      if(num == 0){
+        c1 = circleCenter;
+        t.x = 1.0;
+      }
+      c1 = c1 - circleCenter;
+      c2 = c2 - circleCenter;
+      c3 = c3 - circleCenter;
+      c4 = c4 - circleCenter;
+      if (length(c1) > length(c2)) {
+        c1 = c2;
+        t.x = t.y;
+      }
+      if(length(c3) > length(c4)){
+        c3 = c4;
+        t.z = t.w;
+      }
+      if(length(c1) > length(c3)) {
+        c1 = c3;
+        t.x = t.z;
+      }
+      c1 = c1 * 0.3;
+      circleCenter = circleCenter + c1;
+      // Modulate the circle sizes around the circle and in time
+      float circleSize = 0.2 + 0.12 * cos(theta * 9.0 - time * 2.0);
+
+      vec2 xy = circleCenter + circlePoint * circleSize;
+
+      // Define some pretty colors
+      float th = 8.0 * theta + time * 2.0;
+      vColor = 0.6 + 0.4 * vec3(
+        cos(th),
+        cos(th - PI / 3.0),
+        cos(th - PI * 2.0 / 3.0)
+      );
+      aa = t.x;
+
+      gl_Position = vec4(xy / aspectRatio, 0, 1);
+    }`,
+  frag: `
+    precision highp float;
+    varying vec3 vColor;
+    varying float aa;
+    uniform float alpha;
+    void main () {
+      gl_FragColor = vec4(vColor, alpha * aa);
+    }`,
+  attributes: {
+    // This attribute defines what we draw; we fundamentally draw circle vertices
+    circlePoint: circleInstanceGeometry,
+    
+    // This attribute allows us to compute where we draw each circle. the divisor
+    // means we step through one value *per circle*.
+    theta: {buffer: instanceTheta, divisor: 1},
+  },
+  uniforms: {
+    // Scale so that it fits in the view whether it's portrait or landscape:
+    aspectRatio: ctx => ctx.framebufferWidth > ctx.framebufferHeight ?
+      [ctx.framebufferWidth / ctx.framebufferHeight, 1] :
+      [1, ctx.framebufferHeight / ctx.framebufferWidth],
+    
+    time: regl.context('time'),
+    
+    // Decrease opacity when there are more circles
+    alpha: Math.max(0, Math.min(1, 0.15 * 2000 / numCircleInstances)),
+    u_textures: [0, 1, 2, 3],
+    otP: coords.slice(0, 4),
+    tfP: coords.slice(4, 8),
+    num: peopleCount,
+    ta: targetAlpha,
+  },
+  blend: {
+    // Additive blending
+    enable: true,
+    func: {srcRGB: 'src alpha', srcAlpha: 1, dstRGB: 1, dstAlpha: 1},  
+    equation: {rgb: 'add', alpha: 'add'}
+  },
+  // GL_LINES are in general *pretty bad*, but they're good for some things
+  primitive: 'line strip',
+  depth: {enable: false},
+  count: numCircleDivisions + 1,
+  instances: numCircleInstances,
+})() };
+
 
   const gap = 30;
 
@@ -329,7 +491,6 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
 
   async function resetTexture(num) {
     let p = Math.min(num, 5);
-    console.log(num, p);
 
     for(let c of circles) {
       c.texture = otherBase[p]
@@ -372,7 +533,30 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
 
         if (latestNum != filteredPoses.length) {
           latestNum = filteredPoses.length;
-          resetTexture(latestNum);
+          resetTexture(latestNum)
+          if(latestNum)
+            numCircleDivisions = latestNum + 2;
+          else
+            numCircleDivisions = 10;
+          circleInstanceGeometry = Array.from(Array(numCircleDivisions + 1).keys()).map(i => {
+            var theta = Math.PI * 2 * i / numCircleDivisions;
+            return [Math.cos(theta), Math.sin(theta)];
+          
+          }); 
+          instanceTheta = Array.from(Array(numCircleInstances).keys()).map(i => 
+            i / numCircleInstances * 2 * Math.PI
+          );
+
+          peopleCount = Math.min(4, latestNum);
+          peopleCount = 1;
+        }
+
+        coords = Array.from(Array(8).keys()).map( () => 10 );
+        for(let i = 0; i < filteredPoses.length && i < 4; i++) {
+          coords[2*i] = filteredPoses[i].keypoints[0].position.x / 1081 * (-2) + 1;
+          coords[2*i+1] = filteredPoses[i].keypoints[0].position.y / 1080 * 2 - 1;
+          targetAlpha[i] = (1 - filteredPoses[i].keypoints[POSE_RIGHT_WRIST].position.y / 1080) * 0.7 + 0.3;
+          // targetAlpha[i] = 1;
         }
 
         headPos = filteredPoses.map(pose => [pose.keypoints[0].position.x, pose.keypoints[0].position.y]);
@@ -423,6 +607,10 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
   const wind = new Wind();
 
   app.ticker.add(() => {
+    regl.poll();
+    regl.clear({ color: [0, 0, 0, 0] });
+    // regl.clear({ color: [1, 1, 1, 1] });
+    draw();
     counter++;
     for (const i in circles) {
       const circle = circles[i];
