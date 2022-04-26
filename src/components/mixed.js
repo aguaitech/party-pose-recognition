@@ -11,6 +11,7 @@ import { Camera } from "@mediapipe/camera_utils";
 // import seedrandom from "seedrandom";
 import * as PIXI from "pixi.js";
 import color from "color";
+import { POSE_RIGHT_WRIST } from "@/core/constant";
 
 class Stick {
   cx = 0;
@@ -184,13 +185,13 @@ class Wind {
   }
 }
 
-const MAX_CIRCLE_CNT = 1500,
-  MIN_CIRCLE_CNT = 100;
+const MAX_CIRCLE_CNT = 1000;
+const MIN_CIRCLE_CNT = 100;
 //const MAX_VERTEX_CNT = 30,
 // MIN_VERTEX_CNT = 3;
-const BG_OPACITY = 0.5;
+const BG_OPACITY = 1;
 
-let circleCnt = 1500,
+let circleCnt = 750,
   vertexCnt = 30;
 
 function getCenterByTheta(theta, time, scale) {
@@ -212,12 +213,13 @@ function getColorByTheta(theta, time) {
   const th = 8 * theta + time * 2;
   const r = 0.6 + 0.4 * Math.cos(th),
     g = 0.6 + 0.4 * Math.cos(th - Math.PI / 3),
-    b = 0.6 + 0.4 * Math.cos(th - (Math.PI * 2) / 3),
-    a =
+    b = 0.6 + 0.4 * Math.cos(th - (Math.PI * 2) / 3);
+  const a =
       ((circleCnt - MIN_CIRCLE_CNT) / (MAX_CIRCLE_CNT - MIN_CIRCLE_CNT)) *
-        (0.3 - 1.5) +
-      1.5;
-  return [r * 255, g * 255, b * 255, a];
+        (30 - 150) / 255 +
+        180 / 255;
+    
+  return [r * 255, g * 255, b * 255, a + 0.05];
 }
 
 /**
@@ -242,6 +244,8 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
   const scale = 1081 / 2;
   const transferFactor = 0.3;
   let headPos = [];
+  let rightHandPos = [];
+  const circleLineWidth = 5;
 
   const sticks = [];
 
@@ -264,7 +268,7 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
   });
 
   const circleBase = new PIXI.Graphics();
-  circleBase.lineStyle({ width: 10, color: 0xffffff });
+  circleBase.lineStyle({ width: circleLineWidth, color: 0xffffff });
 
   for (let vi = 0; vi <= vertexCnt; vi++) {
     const thetaV = (vi / vertexCnt) * Math.PI * 2;
@@ -283,7 +287,7 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
   for(let i = 0; i < 5; i ++) {
 
     let cb = new PIXI.Graphics();
-    cb.lineStyle({ width: 10, color: 0xffffff });
+    cb.lineStyle({ width: circleLineWidth, color: 0xffffff });
     const vc = i + 3;
     for (let vi = 0; vi <= vc; vi++) {
       const thetaV = (vi / vc) * Math.PI * 2;
@@ -316,7 +320,10 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
     circle.alpha = circleColor[3] * BG_OPACITY;
 
     circles.push(circle);
-    particles.addChild(circle);
+    // particles.addChild(circle);
+  }
+  for(let i = circleCnt - 1; i >= 0; i --) {
+    particles.addChild(circles[i]);
   }
 
   async function resetTexture(num) {
@@ -368,6 +375,7 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
         }
 
         headPos = filteredPoses.map(pose => [pose.keypoints[0].position.x, pose.keypoints[0].position.y]);
+        rightHandPos = filteredPoses.map(pose => [pose.keypoints[POSE_RIGHT_WRIST].position.x, pose.keypoints[POSE_RIGHT_WRIST].position.y])
 
       }
     },
@@ -405,7 +413,7 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
 
     maggots.push(dude);
 
-    particles2.addChild(dude);
+    // particles2.addChild(dude);
   }
 
   const wind = new Wind();
@@ -423,10 +431,15 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
       circle.position.set(...transferPos(getCenterByTheta(thetaC, time, scale), headPos));
       circle.scale.set(circleSize / scale);
 
+      let opacity = 1;
+      for(let j = 0; j < rightHandPos.length; j ++) {
+        opacity = rightHandPos[j][1] / 1081;
+      }
+
       const circleColor = getColorByTheta(thetaC, time);
 
       circle.tint = circleColor.slice(0, 3).reduce((p, v) => p * 256 + v);
-      circle.alpha = circleColor[3] * BG_OPACITY;
+      circle.alpha = circleColor[3] * opacity;
     }
 
     wind.next();
@@ -434,7 +447,7 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
     for (let i = 0; i < maggots.length; i++) {
       const dude = maggots[i];
       sticks[i].blow(...wind.getWind(sticks[i].cx, sticks[i].cy));
-      dude.alpha = Math.sin((sticks[i].phi / 180) * Math.PI);
+      dude.alpha = Math.sin((sticks[i].phi / 180) * Math.PI) * 0.4;
       dude.angle = sticks[i].rho;
       dude.tint = parseInt(
         color(`hsl(${sticks[i].rho.toFixed(6)},100%,50%)`)
