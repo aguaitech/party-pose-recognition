@@ -207,56 +207,7 @@ let targetAlpha = Array.from(Array(4).keys()).map(() => 0.0);
 
 let peopleCount = 0;
 
-// function reglCanvas (width, height, dpi, reglOptions) {
-//   dpi = dpi === undefined ? devicePixelRatio : dpi;
-//   reglOptions = reglOptions || {}
-//   var canvas = document.createElement("canvas");
-//   canvas.width = dpi * width;
-//   canvas.height = dpi * height;
-//   canvas.style.width = width + "px";
-//   const regl = createREGL(Object.assign({}, reglOptions, {pixelRatio: dpi, canvas}));
-//   canvas.value = regl;
-//   canvas.__reglConfig = {dpi, reglOptions}
-//   return canvas;
-// }
 
-
-const MAX_CIRCLE_CNT = 2000;
-const MIN_CIRCLE_CNT = 100;
-//const MAX_VERTEX_CNT = 30,
-// MIN_VERTEX_CNT = 3;
-const BG_OPACITY = 1;
-
-let circleCnt = 2000,
-  vertexCnt = 30;
-
-function getCenterByTheta(theta, time, scale) {
-  const direction = [Math.cos(theta), Math.sin(theta)];
-  const distance = 0.6 + 0.2 * Math.cos(theta * 6 + Math.cos(theta * 8 + time));
-  const circleCenter = direction
-    .map((v) => v * distance * scale)
-    .map((v, i) => v + (i == 0 ? 1081 / 2 : 1080 / 2));
-  return circleCenter;
-}
-
-function getSizeByTheta(theta, time, scale) {
-  const offset = 0.2 + 0.12 * Math.cos(theta * 9 - time * 2);
-  const circleSize = scale * offset;
-  return circleSize;
-}
-
-function getColorByTheta(theta, time) {
-  const th = 8 * theta + time * 2;
-  const r = 0.6 + 0.4 * Math.cos(th),
-    g = 0.6 + 0.4 * Math.cos(th - Math.PI / 3),
-    b = 0.6 + 0.4 * Math.cos(th - (Math.PI * 2) / 3);
-  const a =
-      ((circleCnt - MIN_CIRCLE_CNT) / (MAX_CIRCLE_CNT - MIN_CIRCLE_CNT)) *
-        (30 - 150) / 255 +
-        180 / 255;
-    
-  return [r * 255, g * 255, b * 255, a + 0.05];
-}
 
 /**
  *
@@ -275,14 +226,7 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
     height: 1080,
   });
 
-  const circles = [];
-  let counter = 0;
-  const scale = 1081 / 2;
-  const transferFactor = 0.3;
-  let headPos = [];
-  let rightHandPos = [];
   let hightestLeftHand = 0;
-  const circleLineWidth = 5;
 
   const sticks = [];
 
@@ -302,7 +246,8 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
   canvas.width = 1081;
   canvas.height = 1080;
   canvas.style.position = 'absolute';
-  document.querySelector(".output_canvas").appendChild(canvas);
+  canvas.style.left = '0';
+  document.getElementById("canvas_container").appendChild(canvas);
 
 
 let draw = () => {regl({
@@ -422,98 +367,6 @@ let draw = () => {regl({
     }
   }
 
-  const particles = new PIXI.ParticleContainer(MAX_CIRCLE_CNT, {
-    position: true,
-    uvs: false,
-    vertices: true,
-    rotation: false,
-    tint: true,
-  });
-
-  const circleBase = new PIXI.Graphics();
-  circleBase.lineStyle({ width: circleLineWidth, color: 0xffffff });
-
-  for (let vi = 0; vi <= vertexCnt; vi++) {
-    const thetaV = (vi / vertexCnt) * Math.PI * 2;
-    const x = Math.cos(thetaV) * scale;
-    const y = Math.sin(thetaV) * scale;
-    if (vi == 0) {
-      circleBase.moveTo(x, y);
-    } else {
-      circleBase.lineTo(x, y);
-    }
-  }
-  const circleTexture = app.renderer.generateTexture(circleBase);
-
-  const otherBase = [];
-  otherBase.push(circleTexture);
-  for(let i = 0; i < 5; i ++) {
-
-    let cb = new PIXI.Graphics();
-    cb.lineStyle({ width: circleLineWidth, color: 0xffffff });
-    const vc = i + 3;
-    for (let vi = 0; vi <= vc; vi++) {
-      const thetaV = (vi / vc) * Math.PI * 2;
-      const x = Math.cos(thetaV) * scale;
-      const y = Math.sin(thetaV) * scale;
-      if (vi == 0) {
-        cb.moveTo(x, y);
-      } else {
-        cb.lineTo(x, y);
-      }
-    }
-    otherBase.push(app.renderer.generateTexture(cb));
-  }
-
-  for (let i = 0; i < circleCnt; i++) {
-    const circle = new PIXI.Sprite(circleTexture);
-
-    const time = counter / 20;
-    const thetaC = (i / circleCnt) * Math.PI * 2;
-
-    const circleSize = getSizeByTheta(thetaC, time, scale);
-
-    circle.anchor.set(0.5);
-    circle.position.set(...getCenterByTheta(thetaC, time, scale));
-    circle.scale.set(circleSize / scale);
-
-    const circleColor = getColorByTheta(thetaC, time);
-
-    circle.tint = circleColor.slice(0, 3).reduce((p, v) => p * 256 + v);
-    circle.alpha = circleColor[3] * BG_OPACITY;
-
-    circles.push(circle);
-    // particles.addChild(circle);
-  }
-  for(let i = circleCnt - 1; i >= 0; i --) {
-    particles.addChild(circles[i]);
-  }
-
-  async function resetTexture(num) {
-    let p = Math.min(num, 5);
-
-    for(let c of circles) {
-      c.texture = otherBase[p]
-    }
-  }
-
-  function transferPos(pos, refs) {
-    if(!refs.length) return pos;
-
-    let idx = -1, min_d;
-    
-    for (let i = 0; i < refs.length; i++) {
-      const ref = refs[i];
-      const dis = Math.sqrt((pos[0] - ref[0]) ** 2 + (pos[1] - ref[1]) ** 2);
-
-      if(idx == -1 || min_d > dis) {
-        idx = i;
-        min_d = dis;
-      }
-    }
-
-    return [pos[0] + (refs[idx][0] - pos[0]) * transferFactor, pos[1] + (refs[idx][1] - pos[1]) * transferFactor];
-  }
 
   let latestNum = 0;
 
@@ -533,7 +386,6 @@ let draw = () => {regl({
 
         if (latestNum != filteredPoses.length) {
           latestNum = filteredPoses.length;
-          resetTexture(latestNum)
           if(latestNum)
             numCircleDivisions = latestNum + 2;
           else
@@ -559,9 +411,6 @@ let draw = () => {regl({
           // targetAlpha[i] = 1;
         }
 
-        headPos = filteredPoses.map(pose => [pose.keypoints[0].position.x, pose.keypoints[0].position.y]);
-        rightHandPos = filteredPoses.map(pose => [pose.keypoints[POSE_RIGHT_WRIST].position.x, pose.keypoints[POSE_RIGHT_WRIST].position.y])
-
 
         hightestLeftHand = Math.max(...filteredPoses.map(pose => pose.keypoints[POSE_LEFT_WRIST].position.y));
 
@@ -585,7 +434,6 @@ let draw = () => {regl({
   });
 
   // particles2.alpha = BG_OPACITY;
-  app.stage.addChild(particles);
   app.stage.addChild(particles2);
 
   for (let i = 0; i < totalSprites; i++) {
@@ -611,29 +459,6 @@ let draw = () => {regl({
     regl.clear({ color: [0, 0, 0, 0] });
     // regl.clear({ color: [1, 1, 1, 1] });
     draw();
-    counter++;
-    for (const i in circles) {
-      const circle = circles[i];
-
-      const time = counter / 20;
-      const thetaC = (i / circleCnt) * Math.PI * 2;
-
-      const circleSize = getSizeByTheta(thetaC, time, scale);
-
-      circle.position.set(...transferPos(getCenterByTheta(thetaC, time, scale), headPos));
-      circle.scale.set(circleSize / scale);
-
-      let opacity = 1;
-      for(let j = 0; j < rightHandPos.length; j ++) {
-        opacity = rightHandPos[j][1] / 1081;
-      }
-
-      const circleColor = getColorByTheta(thetaC, time);
-
-      circle.tint = circleColor.slice(0, 3).reduce((p, v) => p * 256 + v);
-      circle.alpha = circleColor[3] * opacity;
-    }
-
     wind.next();
     // iterate through the sprites and update their position
     for (let i = 0; i < maggots.length; i++) {
