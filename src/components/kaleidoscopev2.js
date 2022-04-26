@@ -134,11 +134,11 @@ class Kaleidoscope {
                 Math.sqrt(Math.pow(this.width, 2) + Math.pow(this.height, 2))
           );
         }
-        if (!this.mouses) v = 1;
+        if (!this.mouses.length) v = 1;
         else {
           v = v * v;
           if (v > 0.2) v = v * v * v;
-          else v = 0;
+          else v = 0.1;
         }
         this.spriteTiles[i].alpha = v;
       }
