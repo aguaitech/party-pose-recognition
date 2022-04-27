@@ -32,8 +32,19 @@
       <el-radio-button label="ultra" />
     </el-radio-group>
   </p> -->
-  <div style="display:flex; flex-direction: row; align-items: center; justify-content: center">
-    <div class="output_canvas" id="canvas_container" style=" width: 1083px; position: relative;">
+  <div
+    style="
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+    "
+  >
+    <div
+      class="output_canvas"
+      id="canvas_container"
+      style="width: 1083px; position: relative"
+    >
       <canvas
         width="1081"
         height="1080"
@@ -115,7 +126,9 @@ export default {
         // "border: 1px solid red; transform: scaleX(-1)"
         "border: 1px solid red"
       );
-      document.querySelector(".output_canvas canvas").remove();
+      document
+        .querySelectorAll(".output_canvas canvas")
+        .forEach((n) => n.remove());
       document.querySelector(".output_canvas").appendChild(canvasElement);
 
       if (stop) {

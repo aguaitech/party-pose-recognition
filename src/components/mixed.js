@@ -42,7 +42,7 @@ class Stick {
     return [
       x == 0 && y == 0 ? 0 : (Math.atan2(y, x) / Math.PI) * 180,
       (Math.asin(Math.min(1, Math.sqrt(x * x + y * y) / length)) / Math.PI) *
-        180,
+      180,
     ];
   }
 
@@ -60,7 +60,7 @@ class Stick {
     const [originX, originY] = this.toXY(this.rho, this.phi);
     const factor = Math.cos((this.phi / 180) * Math.PI);
     const finalVx =
-        vx * factor + this.vx * this.alpha + (this.cx - originX) * this.beta,
+      vx * factor + this.vx * this.alpha + (this.cx - originX) * this.beta,
       finalVy =
         vy * factor + this.vy * this.alpha + (this.cy - originY) * this.beta;
     const finalX = originX + finalVx,
@@ -86,7 +86,7 @@ class Stick {
         fillArray.push([
           `rgba(0,255,0,${Math.pow(
             Math.sqrt(Math.pow(x0 - this.cx, 2) + Math.pow(y0 - this.cy, 2)) /
-              this.length,
+            this.length,
             3
           )})`,
           x0,
@@ -128,18 +128,10 @@ class Wind {
   subStep = 3;
   centroids = 2;
   alpha = 0.95;
+  iterations = 0;
 
-  next() {
-    if (this.windMap) {
-      this.windMap = this.windMap.map((row) => row.map((x) => x * this.alpha));
-    } else {
-      this.windMap = Array(this.width)
-        .fill(0)
-        .map(() => Array(this.height).fill(0));
-    }
-    const cent = Array(this.centroids)
-      .fill(0)
-      .map(() => [Math.random() * this.width, Math.random() * this.height]);
+  async applyCent(cent) {
+    await 0;
     for (let [i, j] of cent) {
       const factor = Math.random() * this.maxWind;
       for (let m = -this.kernel / 2; m < this.kernel / 2; m++) {
@@ -147,12 +139,31 @@ class Wind {
           const x = Math.floor(i + m);
           const y = Math.floor(j + n);
           if (x < 0 || x >= this.width || y < 0 || y >= this.height) continue;
-          this.windMap[x][y] +=
+          this.windMap[x * this.height + y] +=
             (factor / ((this.kernel / 8) * Math.sqrt(2 * Math.PI))) *
             Math.exp(-(m * m + n * n) / ((this.kernel * this.kernel) / 32));
         }
       }
     }
+  }
+
+  next() {
+    if (this.windMap) {
+      this.windMap = this.windMap.map(x => x * this.alpha);
+    } else {
+      this.windMap = new Float32Array(this.width * this.height);
+    }
+
+    if (this.iterations % 6 == 0) {
+      const cent = Array(this.centroids)
+        .fill(0)
+        .map(() => [Math.random() * this.width, Math.random() * this.height]);
+
+      this.applyCent(cent);
+    }
+
+
+    this.iterations += 1;
   }
 
   getWind(x, y) {
@@ -178,8 +189,8 @@ class Wind {
           continue;
         // if (i != 0) counterX++;
         // if (j != 0) counterY++;
-        if (i != 0) sx += (this.windMap[x][y] - this.windMap[x + i][y + j]) / i;
-        if (j != 0) sy += (this.windMap[x][y] - this.windMap[x + i][y + j]) / j;
+        if (i != 0) sx += (this.windMap[x * this.height + y] - this.windMap[(x + i) * this.height + y + j]) / i;
+        if (j != 0) sy += (this.windMap[x * this.height + y] - this.windMap[(x + i) * this.height + y + j]) / j;
       }
     }
     return [-sy, sx];
@@ -198,11 +209,11 @@ let circleInstanceGeometry = Array.from(Array(numCircleDivisions + 1).keys()).ma
 
 });
 
-let instanceTheta = Array.from(Array(numCircleInstances).keys()).map(i => 
+let instanceTheta = Array.from(Array(numCircleInstances).keys()).map(i =>
   i / numCircleInstances * 2 * Math.PI
 );
 
-let coords = Array.from(Array(8).keys()).map( () => 10);
+let coords = Array.from(Array(8).keys()).map(() => 10);
 let targetAlpha = Array.from(Array(4).keys()).map(() => 0.0);
 
 let peopleCount = 0;
@@ -226,6 +237,21 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
     height: 1080,
   });
 
+  const colorCache = [];
+
+  for (let i = 0; i < 360; i++) {
+    const c = parseInt(
+      color(
+        `hsl(${0 * (1 - i / 360) + (360 * i) / 360}, ${100 * (1 - i / 360) + (100 * i) / 360
+        }%, ${50 * (1 - i / 360) + (50 * i) / 360}%)`
+      )
+        .hex()
+        .slice(1),
+      16
+    );
+    colorCache.push(c);
+  }
+
   let hightestLeftHand = 0;
 
   const sticks = [];
@@ -234,14 +260,14 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
 
   const reglOptions = {
     extensions: ['ANGLE_instanced_arrays'],
-    attributes: { antialias: true, depth: false}
+    attributes: { antialias: true, depth: false }
   };
   const dpi = 1.5;
   const canvas = document.createElement("canvas")
 
-  const regl = createREGL(Object.assign({}, reglOptions, {pixelRatio: dpi, canvas: canvas}));
+  const regl = createREGL(Object.assign({}, reglOptions, { pixelRatio: dpi, canvas: canvas }));
   canvas.value = regl;
-  canvas.__reglConfig = {dpi, reglOptions}
+  canvas.__reglConfig = { dpi, reglOptions }
 
   canvas.width = 1081;
   canvas.height = 1080;
@@ -250,8 +276,9 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
   document.getElementById("canvas_container").appendChild(canvas);
 
 
-let draw = () => {regl({
-  vert: `
+  let draw = () => {
+    regl({
+      vert: `
     #define numTextures 4
     precision highp float;
     attribute float theta;
@@ -313,7 +340,7 @@ let draw = () => {regl({
 
       gl_Position = vec4(xy / aspectRatio, 0, 1);
     }`,
-  frag: `
+      frag: `
     precision highp float;
     varying vec3 vColor;
     varying float aa;
@@ -321,42 +348,43 @@ let draw = () => {regl({
     void main () {
       gl_FragColor = vec4(vColor, alpha * aa);
     }`,
-  attributes: {
-    // This attribute defines what we draw; we fundamentally draw circle vertices
-    circlePoint: circleInstanceGeometry,
-    
-    // This attribute allows us to compute where we draw each circle. the divisor
-    // means we step through one value *per circle*.
-    theta: {buffer: instanceTheta, divisor: 1},
-  },
-  uniforms: {
-    // Scale so that it fits in the view whether it's portrait or landscape:
-    aspectRatio: ctx => ctx.framebufferWidth > ctx.framebufferHeight ?
-      [ctx.framebufferWidth / ctx.framebufferHeight, 1] :
-      [1, ctx.framebufferHeight / ctx.framebufferWidth],
-    
-    time: regl.context('time'),
-    
-    // Decrease opacity when there are more circles
-    alpha: Math.max(0, Math.min(1, 0.15 * 2000 / numCircleInstances)),
-    u_textures: [0, 1, 2, 3],
-    otP: coords.slice(0, 4),
-    tfP: coords.slice(4, 8),
-    num: peopleCount,
-    ta: targetAlpha,
-  },
-  blend: {
-    // Additive blending
-    enable: true,
-    func: {srcRGB: 'src alpha', srcAlpha: 1, dstRGB: 1, dstAlpha: 1},  
-    equation: {rgb: 'add', alpha: 'add'}
-  },
-  // GL_LINES are in general *pretty bad*, but they're good for some things
-  primitive: 'line strip',
-  depth: {enable: false},
-  count: numCircleDivisions + 1,
-  instances: numCircleInstances,
-})() };
+      attributes: {
+        // This attribute defines what we draw; we fundamentally draw circle vertices
+        circlePoint: circleInstanceGeometry,
+
+        // This attribute allows us to compute where we draw each circle. the divisor
+        // means we step through one value *per circle*.
+        theta: { buffer: instanceTheta, divisor: 1 },
+      },
+      uniforms: {
+        // Scale so that it fits in the view whether it's portrait or landscape:
+        aspectRatio: ctx => ctx.framebufferWidth > ctx.framebufferHeight ?
+          [ctx.framebufferWidth / ctx.framebufferHeight, 1] :
+          [1, ctx.framebufferHeight / ctx.framebufferWidth],
+
+        time: regl.context('time'),
+
+        // Decrease opacity when there are more circles
+        alpha: Math.max(0, Math.min(1, 0.15 * 2000 / numCircleInstances)),
+        u_textures: [0, 1, 2, 3],
+        otP: coords.slice(0, 4),
+        tfP: coords.slice(4, 8),
+        num: peopleCount,
+        ta: targetAlpha,
+      },
+      blend: {
+        // Additive blending
+        enable: true,
+        func: { srcRGB: 'src alpha', srcAlpha: 1, dstRGB: 1, dstAlpha: 1 },
+        equation: { rgb: 'add', alpha: 'add' }
+      },
+      // GL_LINES are in general *pretty bad*, but they're good for some things
+      primitive: 'line strip',
+      depth: { enable: false },
+      count: numCircleDivisions + 1,
+      instances: numCircleInstances,
+    })()
+  };
 
 
   const gap = 30;
@@ -376,18 +404,13 @@ let draw = () => {regl({
     onFrame: async () => {
       if (net) {
         let startTime = Date.now();
-        const poses = await net.estimateMultiplePoses(videoElement, {
-          maxDetections: 64,
-        });
-        let endTime = Date.now();
-        $Vue.fpsCount = Math.round(1000 / (endTime - startTime));
-        $Vue.peopleCount = poses.length;
+        const poses = await net.estimateMultiplePoses();
 
         let filteredPoses = poses.filter(pose => pose.score > 0.3);
 
         if (latestNum != filteredPoses.length) {
           latestNum = filteredPoses.length;
-          if(latestNum) {
+          if (latestNum) {
             numCircleDivisions = latestNum + 2;
             peopleCount = Math.min(4, latestNum);
           }
@@ -399,23 +422,29 @@ let draw = () => {regl({
           circleInstanceGeometry = Array.from(Array(numCircleDivisions + 1).keys()).map(i => {
             var theta = Math.PI * 2 * i / numCircleDivisions;
             return [Math.cos(theta), Math.sin(theta)];
-          
-          }); 
-          instanceTheta = Array.from(Array(numCircleInstances).keys()).map(i => 
+
+          });
+          instanceTheta = Array.from(Array(numCircleInstances).keys()).map(i =>
             i / numCircleInstances * 2 * Math.PI
           );
         }
 
-        coords = Array.from(Array(8).keys()).map( () => 10 );
-        for(let i = 0; i < filteredPoses.length && i < 4; i++) {
-          coords[2*i] = filteredPoses[i].keypoints[0].position.x / 1081 * (-2) + 1;
-          coords[2*i+1] = filteredPoses[i].keypoints[0].position.y / 1080 * 2 - 1;
+        coords = Array.from(Array(8).keys()).map(() => 10);
+        for (let i = 0; i < filteredPoses.length && i < 4; i++) {
+          coords[2 * i] = 1 - (filteredPoses[i].keypoints[0].position.x / 1081 * (-2) + 1);
+          coords[2 * i + 1] = 1 - (filteredPoses[i].keypoints[0].position.y / 1080 * 2 - 1);
           targetAlpha[i] = (1 - filteredPoses[i].keypoints[POSE_RIGHT_WRIST].position.y / 1080) * 0.7 + 0.3;
           // targetAlpha[i] = 1;
         }
 
 
         hightestLeftHand = Math.max(...filteredPoses.map(pose => pose.keypoints[POSE_LEFT_WRIST].position.y));
+
+        console.log(filteredPoses[0].joints[2])
+
+        let endTime = Date.now();
+        $Vue.fpsCount = Math.round(1000 / (endTime - startTime));
+        $Vue.peopleCount = poses.length;
 
       }
     },
@@ -456,27 +485,40 @@ let draw = () => {regl({
   }
 
   const wind = new Wind();
+  wind.next()
+  console.log(wind, color, hightestLeftHand, draw);
+
+  let iteratins = 0;
 
   app.ticker.add(() => {
+
     regl.poll();
     regl.clear({ color: [0, 0, 0, 0] });
     // regl.clear({ color: [1, 1, 1, 1] });
     draw();
-    wind.next();
-    // iterate through the sprites and update their position
-    for (let i = 0; i < maggots.length; i++) {
-      const dude = maggots[i];
-      sticks[i].blow(...wind.getWind(sticks[i].cx, sticks[i].cy));
-      dude.alpha = Math.sin((sticks[i].phi / 180) * Math.PI) * (1 - hightestLeftHand / 1081 + 0.2);
-      dude.angle = sticks[i].rho;
-      dude.tint = parseInt(
-        color(`hsl(${sticks[i].rho.toFixed(6)},100%,50%)`)
-          .hex()
-          .slice(1),
-        16
-      );
-      dude.scale.set(Math.sin((sticks[i].phi / 180) * Math.PI));
+
+    if (iteratins % 5 == 0) {
+      wind.next();
+      // iterate through the sprites and update their position
+      for (let i = 0; i < maggots.length; i++) {
+        const dude = maggots[i];
+        sticks[i].blow(...wind.getWind(sticks[i].cx, sticks[i].cy));
+        dude.alpha = Math.sin((sticks[i].phi / 180) * Math.PI);
+        console.log(hightestLeftHand);
+        dude.angle = sticks[i].rho;
+        dude.tint = colorCache[Math.round(sticks[i].rho + 360) % 360]
+        // dude.tint = parseInt(
+        //   color(`hsl(${sticks[i].rho.toFixed(6)},100%,50%)`)
+        //     .hex()
+        //     .slice(1),
+        //   16
+        // );
+        dude.scale.set(Math.sin((sticks[i].phi / 180) * Math.PI));
+      }
     }
+
+    iteratins++;
+
   });
 
   return () => {

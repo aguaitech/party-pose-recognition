@@ -47,13 +47,13 @@ export default () => {
             dispose () {
                 kinect.removeAllListeners()
             },
-            estimateMultiplePoses (raw = false) {
+            estimateMultiplePoses () {
                 if (!latestSource || !latestSource.body || !latestSource.body.bodies) {
                     return []
                 }
-                if (raw) {
-                    return latestSource.body.bodies
-                }
+                // if (raw) {
+                //     return latestSource.body.bodies
+                // }
                 return latestSource.body.bodies.filter(body => body.tracked).map(body => {
                     body.score = 1
                     body.keypoints = [KINECT_HEAD, KINECT_HEAD, KINECT_HEAD, KINECT_HEAD, KINECT_HEAD, KINECT_SHOULDER_LEFT, KINECT_SHOULDER_RIGHT, KINECT_ELBOW_LEFT, KINECT_ELBOW_RIGHT, KINECT_WRIST_LEFT, KINECT_WRIST_RIGHT, KINECT_HIP_LEFT, KINECT_HIP_RIGHT, KINECT_KNEE_LEFT, KINECT_KNEE_RIGHT, KINECT_ANKLE_LEFT, KINECT_ANKLE_RIGHT].map((i) => body.joints[i]).map((j, i) => {
