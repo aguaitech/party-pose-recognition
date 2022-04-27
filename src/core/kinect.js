@@ -38,18 +38,21 @@ export default () => {
         try {
             kinect.openMultiSourceReader({
                 frameTypes: kinect.FrameType.color | kinect.FrameType.infrared | kinect.FrameType.depth | kinect.FrameType.body,
-                includeJointFloorData: true
+                includeJointFloorData: false
             })
         } catch {
             //ignore
         }
         return {
-            dispose() {
+            dispose () {
                 kinect.removeAllListeners()
             },
-            estimateMultiplePoses() {
+            estimateMultiplePoses (raw = false) {
                 if (!latestSource || !latestSource.body || !latestSource.body.bodies) {
                     return []
+                }
+                if (raw) {
+                    return latestSource.body.bodies
                 }
                 return latestSource.body.bodies.filter(body => body.tracked).map(body => {
                     body.score = 1
@@ -62,7 +65,7 @@ export default () => {
                     return body
                 })
             },
-            onupdate(cbk) {
+            onupdate (cbk) {
                 extraCbk = cbk
             }
         }
