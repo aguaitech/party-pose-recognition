@@ -119,5 +119,7 @@ setInterval(() => {
 }, 1000 / 30)
 
 contextBridge.exposeInMainWorld('GlobalWind', {
-    getWind: wind.getWind.bind(wind)
+    getWind: wind.getWind.bind(wind),
+    applyCent: wind.applyCent.bind(wind),
+    next: wind.next.bind(wind)
 })
