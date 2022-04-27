@@ -118,4 +118,6 @@ setInterval(() => {
     wind.next()
 }, 1000 / 30)
 
-contextBridge.exposeInMainWorld('GlobalWind', wind)
+contextBridge.exposeInMainWorld('GlobalWind', {
+    getWind: wind.getWind.bind(wind)
+})
