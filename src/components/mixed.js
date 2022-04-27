@@ -399,7 +399,7 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
 
   let latestNum = 0;
   let lastPeoples = [];
-  // let times;
+  let times = 0;
 
 
   const camera = new Camera(videoElement, {
@@ -454,11 +454,15 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
           cents.push([filteredPoses[i].joints[7].depthX * 1081, filteredPoses[i].joints[7].depthY * 1080]);
         }
 
-        if (cents) {
+        // cents.push([100, 100]);
+        // cents.push([1000, 150]);
+
+        if (cents && times % 5 == 0) {
+          // console.log('in loop');
           window.GlobalWind.applyCent(cents);
-          // times ++;
         }
-        // console.log(cents);
+        times++;
+        // console.log(times);
 
         lastPeoples = filteredPoses;
 

@@ -23,6 +23,7 @@
       <el-radio-button label="Scope" />
     </el-radio-group>
   </p>
+  <el-button type="primary" v-on:click="fullscreen">Full Screen</el-button>
   <!-- <p>
     Choose precision:
     <el-radio-group v-model="precision" size="large">
@@ -33,6 +34,7 @@
     </el-radio-group>
   </p> -->
   <div
+    id='fullscreen'
     style="
       display: flex;
       flex-direction: row;
@@ -48,7 +50,7 @@
       <canvas
         width="1081"
         height="1080"
-        style="border: 1px solid red; transform: scaleX(-1)"
+        style="transform: scaleX(-1)"
       ></canvas>
     </div>
   </div>
@@ -111,6 +113,10 @@ export default {
     },
   },
   methods: {
+    fullscreen() {
+      const canvasContainer = document.getElementById("fullscreen");
+      canvasContainer.requestFullscreen();
+    },
     async mountMode() {
       const realVideoElement = document.createElement("video");
       realVideoElement.width = 1081;
@@ -121,11 +127,11 @@ export default {
       const canvasElement = document.createElement("canvas");
       canvasElement.width = 1081;
       canvasElement.height = 1080;
-      canvasElement.setAttribute(
-        "style",
-        // "border: 1px solid red; transform: scaleX(-1)"
-        "border: 1px solid red"
-      );
+      // canvasElement.setAttribute(
+      //   "style",
+      //   // "border: 1px solid red; transform: scaleX(-1)"
+      //   "border: 1px solid red"
+      // );
       document
         .querySelectorAll(".output_canvas canvas")
         .forEach((n) => n.remove());
