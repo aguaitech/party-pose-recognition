@@ -1,6 +1,6 @@
 <template>
   <p>{{ fpsCount }} fps, {{ peopleCount }} people</p>
-  <p>
+  <!-- <p>
     Choose Camera:
     <el-select v-model="camera" placeholder="Select Camera" size="large">
       <el-option
@@ -10,7 +10,7 @@
         :value="item.deviceId"
       />
     </el-select>
-  </p>
+  </p> -->
   <p>
     Choose display mode:
     <el-radio-group v-model="mode" size="large">
@@ -23,7 +23,7 @@
       <el-radio-button label="Scope" />
     </el-radio-group>
   </p>
-  <p>
+  <!-- <p>
     Choose precision:
     <el-radio-group v-model="precision" size="large">
       <el-radio-button label="low" />
@@ -31,18 +31,15 @@
       <el-radio-button label="high" />
       <el-radio-button label="ultra" />
     </el-radio-group>
-  </p>
+  </p> -->
   <div class="output_canvas">
-    <canvas
-      width="1081"
-      height="1080"
-      style="border: 1px solid red; transform: scaleX(-1)"
-    ></canvas>
+    <canvas width="1081" height="1080" style="border: 1px solid red"></canvas>
   </div>
 </template>
 
 <script>
 import loadNet from "./core";
+import loadKinect from "./core/kinect";
 import debugMode from "./components/debug";
 import avatarMode from "./components/avatar";
 import driftMode from "./components/drift";
@@ -98,15 +95,19 @@ export default {
   },
   methods: {
     async mountMode() {
-      const videoElement = document.createElement("video");
-      videoElement.width = 1081;
-      videoElement.height = 1080;
+      const realVideoElement = document.createElement("video");
+      realVideoElement.width = 1081;
+      realVideoElement.height = 1080;
+      const fakeVideoElement = document.createElement("canvas");
+      fakeVideoElement.width = 1081;
+      fakeVideoElement.height = 1080;
       const canvasElement = document.createElement("canvas");
       canvasElement.width = 1081;
       canvasElement.height = 1080;
       canvasElement.setAttribute(
         "style",
-        "border: 1px solid red; transform: scaleX(-1)"
+        // "border: 1px solid red; transform: scaleX(-1)"
+        "border: 1px solid red"
       );
       document.querySelector(".output_canvas canvas").remove();
       document.querySelector(".output_canvas").appendChild(canvasElement);
@@ -118,11 +119,17 @@ export default {
 
       switch (this.mode) {
         case "Debug":
-          stop = debugMode(videoElement, canvasElement, net, this, this.camera);
+          stop = debugMode(
+            fakeVideoElement,
+            canvasElement,
+            net,
+            this,
+            this.camera
+          );
           break;
         case "Avatar":
           stop = avatarMode(
-            videoElement,
+            realVideoElement,
             canvasElement,
             net,
             this,
@@ -130,11 +137,17 @@ export default {
           );
           break;
         case "Drift":
-          stop = driftMode(videoElement, canvasElement, net, this, this.camera);
+          stop = driftMode(
+            realVideoElement,
+            canvasElement,
+            net,
+            this,
+            this.camera
+          );
           break;
         case "Circles":
           stop = circlesMode(
-            videoElement,
+            realVideoElement,
             canvasElement,
             net,
             this,
@@ -142,11 +155,17 @@ export default {
           );
           break;
         case "Mixed":
-          stop = mixedMode(videoElement, canvasElement, net, this, this.camera);
+          stop = mixedMode(
+            fakeVideoElement,
+            canvasElement,
+            net,
+            this,
+            this.camera
+          );
           break;
         case "Liquid":
           stop = liquidMode(
-            videoElement,
+            realVideoElement,
             canvasElement,
             net,
             this,
@@ -154,13 +173,19 @@ export default {
           );
           break;
         case "Scope":
-          stop = scopeMode(videoElement, canvasElement, net, this, this.camera);
+          stop = scopeMode(
+            realVideoElement,
+            canvasElement,
+            net,
+            this,
+            this.camera
+          );
           break;
       }
     },
   },
   async mounted() {
-    net = await loadNet(); // Prevent observation on net properties
+    net = loadKinect();
 
     const devices = await navigator.mediaDevices.enumerateDevices();
     this.cameraOptions = devices.filter(
