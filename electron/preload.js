@@ -46,6 +46,20 @@ class Wind {
     centroids = 2;
     alpha = 0.95;
     iterations = 0;
+    kernelCache = new Float32Array(this.kernel * this.kernel)
+
+    buildKernel () {
+        for (let m = 0; m < this.kernel; m++) {
+            for (let n = 0; n < this.kernel; n++) {
+                const x = Math.floor(m);
+                const y = Math.floor(n);
+                if (x < 0 || x >= this.kernel || y < 0 || y >= this.kernel) continue;
+                this.kernelCache[x * this.kernel + y] =
+                    (1 / ((this.kernel / 8) * Math.sqrt(2 * Math.PI))) *
+                    Math.exp(-(m * m + n * n) / ((this.kernel * this.kernel) / 32));
+            }
+        }
+    }
 
     applyCent (cent) {
         for (let [i, j] of cent) {
@@ -55,9 +69,7 @@ class Wind {
                     const x = Math.floor(i + m);
                     const y = Math.floor(j + n);
                     if (x < 0 || x >= this.width || y < 0 || y >= this.height) continue;
-                    this.windMap[x * this.height + y] +=
-                        (factor / ((this.kernel / 8) * Math.sqrt(2 * Math.PI))) *
-                        Math.exp(-(m * m + n * n) / ((this.kernel * this.kernel) / 32));
+                    this.windMap[x * this.height + y] += factor * this.kernelCache(Math.floor(m + this.kernel / 2) * this.kernel + Math.floor(n + this.kernel / 2))
                 }
             }
         }
@@ -114,9 +126,13 @@ class Wind {
 }
 
 const wind = new Wind()
-setInterval(() => {
+wind.buildKernel()
+function runWind () {
     wind.next()
-}, 1000 / 30)
+    setTimeout(runWind, 0)
+}
+
+runWind()
 
 contextBridge.exposeInMainWorld('GlobalWind', {
     getWind: wind.getWind.bind(wind),
