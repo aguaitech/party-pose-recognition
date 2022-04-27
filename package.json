@@ -2,10 +2,14 @@
   "name": "party-pose-recognition",
   "version": "0.1.0",
   "private": true,
+  "main": "electron/main.js",
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
+    "lint": "vue-cli-service lint",
+    "electron:start": "concurrently \"yarn serve\" \"wait-on http://localhost:8080 && electron .\"",
+    "electron:build": "yarn build && electron-builder build --publish never",
+    "electron:publish": "electron-builder build --publish never"
   },
   "dependencies": {
     "@mediapipe/camera_utils": "^0.3.1640029074",
@@ -15,8 +19,11 @@
     "@tensorflow/tfjs-backend-webgl": "^3.15.0",
     "color": "^4.2.3",
     "core-js": "^3.8.3",
+    "electron-is": "^3.0.0",
     "element-plus": "^2.1.8",
+    "kinect2": "^0.2.6",
     "pixi.js": "^6.3.0",
+    "regl": "^2.1.0",
     "seedrandom": "^3.0.5",
     "simplex-noise": "^3.0.1",
     "vue": "^3.2.13"
@@ -27,9 +34,13 @@
     "@vue/cli-plugin-babel": "~5.0.0",
     "@vue/cli-plugin-eslint": "~5.0.0",
     "@vue/cli-service": "~5.0.0",
+    "concurrently": "^7.1.0",
+    "electron": "^18.1.0",
+    "electron-builder": "^23.0.3",
     "eslint": "^7.32.0",
     "eslint-plugin-vue": "^8.0.3",
-    "patch-package": "^6.4.7"
+    "patch-package": "^6.4.7",
+    "wait-on": "^6.0.1"
   },
   "eslintConfig": {
     "root": true,
@@ -50,5 +61,19 @@
     "last 2 versions",
     "not dead",
     "not ie 11"
-  ]
+  ],
+  "homepage": "./",
+  "build": {
+    "appId": "cn.jackz.party",
+    "productName": "Party Pose Recognization",
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "extends": null,
+    "mac": {
+      "type": "distribution"
+    }
+  }
 }
