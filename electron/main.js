@@ -1,8 +1,8 @@
 const { app, BrowserWindow, screen: electronScreen } = require('electron');
 const isDev = require('electron-is-dev');
 const path = require('path');
-
 const createMainWindow = () => {
+
     let mainWindow = new BrowserWindow({
         width: electronScreen.getPrimaryDisplay().workArea.width,
         height: electronScreen.getPrimaryDisplay().workArea.height,

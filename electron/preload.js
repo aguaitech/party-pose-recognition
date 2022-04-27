@@ -36,106 +36,140 @@ contextBridge.exposeInMainWorld('Kinect', {
     TrackingState: Kinect.TrackingState
 })
 
-class Wind {
-    windMap = null;
-    width = 1081;
-    height = 1080;
-    maxWind = 10000;
-    kernel = 1081;
-    subStep = 3;
-    centroids = 2;
-    alpha = 0.95;
-    iterations = 0;
-    kernelCache = new Float32Array(this.kernel * this.kernel)
+// class Wind {
+//     windMap = null;
+//     width = 1081;
+//     height = 1080;
+//     maxWind = 10000;
+//     kernel = 1081;
+//     subStep = 3;
+//     centroids = 2;
+//     alpha = 0.95;
+//     iterations = 0;
+//     kernelCache = new Float32Array(this.kernel * this.kernel)
+//     windsCache = Array(this.width).fill(0).map(() => Array(this.height).fill([0, 0]));
 
-    buildKernel () {
-        for (let m = 0; m < this.kernel; m++) {
-            for (let n = 0; n < this.kernel; n++) {
-                const x = Math.floor(m);
-                const y = Math.floor(n);
-                if (x < 0 || x >= this.kernel || y < 0 || y >= this.kernel) continue;
-                this.kernelCache[x * this.kernel + y] =
-                    (1 / ((this.kernel / 8) * Math.sqrt(2 * Math.PI))) *
-                    Math.exp(-(m * m + n * n) / ((this.kernel * this.kernel) / 32));
-            }
-        }
-    }
+//     buildKernel() {
+//         for (let m = 0; m < this.kernel; m++) {
+//             for (let n = 0; n < this.kernel; n++) {
+//                 const x = Math.floor(m);
+//                 const y = Math.floor(n);
+//                 if (x < 0 || x >= this.kernel || y < 0 || y >= this.kernel) continue;
+//                 this.kernelCache[x * this.kernel + y] =
+//                     (1 / ((this.kernel / 8) * Math.sqrt(2 * Math.PI))) *
+//                     Math.exp(-((m - this.kernel / 2) * (m - this.kernel / 2) + (n - this.kernel / 2) * (n - this.kernel / 2)) / ((this.kernel * this.kernel) / 32));
+//             }
+//         }
+//     }
 
-    applyCent (cent) {
-        for (let [i, j] of cent) {
-            const factor = Math.random() * this.maxWind;
-            for (let m = -this.kernel / 2; m < this.kernel / 2; m++) {
-                for (let n = -this.kernel / 2; n < this.kernel / 2; n++) {
-                    const x = Math.floor(i + m);
-                    const y = Math.floor(j + n);
-                    if (x < 0 || x >= this.width || y < 0 || y >= this.height) continue;
-                    this.windMap[x * this.height + y] += factor * this.kernelCache(Math.floor(m + this.kernel / 2) * this.kernel + Math.floor(n + this.kernel / 2))
-                }
-            }
-        }
-    }
+//     applyCent(cent) {
+//         for (let [i, j] of cent) {
+//             const factor = Math.random() * this.maxWind;
+//             for (let m = -this.kernel / 2; m < this.kernel / 2; m++) {
+//                 for (let n = -this.kernel / 2; n < this.kernel / 2; n++) {
+//                     const x = Math.floor(i + m);
+//                     const y = Math.floor(j + n);
+//                     if (x < 0 || x >= this.width || y < 0 || y >= this.height) continue;
+//                     this.windMap[x * this.height + y] += factor * this.kernelCache[Math.floor(m + this.kernel / 2) * this.kernel + Math.floor(n + this.kernel / 2)]
+//                 }
+//             }
+//         }
+//     }
 
-    next () {
-        if (this.windMap) {
-            this.windMap = this.windMap.map(x => x * this.alpha);
-        } else {
-            this.windMap = new Float32Array(this.width * this.height);
-        }
+//     next() {
+//         if (this.windMap) {
+//             this.windMap = this.windMap.map(x => x * this.alpha);
+//         } else {
+//             this.windMap = new Float32Array(this.width * this.height);
+//         }
 
-        if (this.iterations % 6 == 0) {
-            const cent = Array(this.centroids)
-                .fill(0)
-                .map(() => [Math.random() * this.width, Math.random() * this.height]);
+//         if (this.iterations % 6 == 0) {
+//             const cent = Array(this.centroids)
+//                 .fill(0)
+//                 .map(() => [Math.random() * this.width, Math.random() * this.height]);
 
-            this.applyCent(cent);
-        }
+//             this.applyCent(cent);
+//         }
 
 
-        this.iterations += 1;
-    }
+//         this.iterations += 1;
+//     }
 
-    getWind (x, y) {
-        if (!this.windMap) this.next();
-        if (x >= this.width) x = this.width - 1;
-        if (y >= this.height) y = this.height - 1;
-        if (x < 0) x = 0;
-        if (y < 0) y = 0;
-        x = Math.floor(x);
-        y = Math.floor(y);
-        let sx = 0,
-            sy = 0;
-        //let counterX = 0,
-        // counterY = 0;
-        for (let i = -3; i <= 3; i++) {
-            for (let j = -3; j <= 3; j++) {
-                if (
-                    x + i < 0 ||
-                    x + i >= this.width ||
-                    y + j < 0 ||
-                    y + j >= this.height
-                )
-                    continue;
-                // if (i != 0) counterX++;
-                // if (j != 0) counterY++;
-                if (i != 0) sx += (this.windMap[x * this.height + y] - this.windMap[(x + i) * this.height + y + j]) / i;
-                if (j != 0) sy += (this.windMap[x * this.height + y] - this.windMap[(x + i) * this.height + y + j]) / j;
-            }
-        }
-        return [-sy, sx];
-    }
-}
+//     getWind(x, y) {
+//         if (!this.windMap) this.next();
+//         if (x >= this.width) x = this.width - 1;
+//         if (y >= this.height) y = this.height - 1;
+//         if (x < 0) x = 0;
+//         if (y < 0) y = 0;
+//         x = Math.floor(x);
+//         y = Math.floor(y);
+//         let sx = 0,
+//             sy = 0;
+//         //let counterX = 0,
+//         // counterY = 0;
+//         for (let i = -3; i <= 3; i++) {
+//             for (let j = -3; j <= 3; j++) {
+//                 if (
+//                     x + i < 0 ||
+//                     x + i >= this.width ||
+//                     y + j < 0 ||
+//                     y + j >= this.height
+//                 )
+//                     continue;
+//                 // if (i != 0) counterX++;
+//                 // if (j != 0) counterY++;
+//                 if (i != 0) sx += (this.windMap[x * this.height + y] - this.windMap[(x + i) * this.height + y + j]) / i;
+//                 if (j != 0) sy += (this.windMap[x * this.height + y] - this.windMap[(x + i) * this.height + y + j]) / j;
+//             }
+//         }
+//         return [-sy, sx];
+//     }
 
-const wind = new Wind()
-wind.buildKernel()
-function runWind () {
-    wind.next()
-    setTimeout(runWind, 0)
-}
+//     getWinds() {
+//         return Array(this.width).fill(0).map((_, i) => Array(this.height).fill(0).map((_, j) => this.getWind(i, j)))
+//     }
+// }
 
-runWind()
+// const wind = new Wind()
+// wind.buildKernel()
+// function runWind() {
+//     wind.next()
+//     setTimeout(runWind, 1)
+// }
+
+const worker = new Worker('./server.js')
 
 contextBridge.exposeInMainWorld('GlobalWind', {
-    getWind: wind.getWind.bind(wind),
-    applyCent: wind.applyCent.bind(wind),
-    next: wind.next.bind(wind)
+    getWind: (x, y) => new Promise((res) => {
+        const cbk = ({ data }) => {
+            if (data.type === 'wind-data') {
+                worker.removeEventListener('message', cbk)
+                res(data.data)
+            }
+        }
+        worker.addEventListener('message', cbk)
+        worker.postMessage({ type: 'wind-data', args: [x, y] })
+    }),
+    getWinds: (args) => new Promise((res) => {
+        const cbk = ({ data }) => {
+            if (data.type === 'winds-data') {
+                worker.removeEventListener('message', cbk)
+                res(data.data)
+            }
+        }
+        worker.addEventListener('message', cbk)
+        worker.postMessage({ type: 'winds-data', args })
+    }),
+    applyCent: (x, y) => new Promise((res) => {
+        const cbk = ({ data }) => {
+            if (data.type === 'apply-cent') {
+                worker.removeEventListener('message', cbk)
+                res(data.data)
+            }
+        }
+        worker.addEventListener('message', cbk)
+        worker.postMessage({ type: 'apply-cent', args: [x, y] })
+    }),
 })
+
+// runWind()

@@ -6,12 +6,13 @@
 //   POSE_RIGHT_EAR,
 //   POSE_RIGHT_EYE,
 // } from "@/core/constant";
-import { Camera } from "@/core/camera";
+// import { Camera } from "@/core/camera";
+import { Camera } from "@mediapipe/camera_utils";
 // import { drawConnectors } from "@mediapipe/drawing_utils";
 // import seedrandom from "seedrandom";
 import * as PIXI from "pixi.js";
 import color from "color";
-import { POSE_LEFT_WRIST, POSE_RIGHT_WRIST } from "@/core/constant";
+import { POSE_LEFT_WRIST } from "@/core/constant";
 const createREGL = require('regl')
 
 class Stick {
@@ -119,83 +120,83 @@ class Stick {
   }
 }
 
-class Wind {
-  windMap = null;
-  width = 1081;
-  height = 1080;
-  maxWind = 10000;
-  kernel = 1081;
-  subStep = 3;
-  centroids = 2;
-  alpha = 0.95;
-  iterations = 0;
+// class Wind {
+//   windMap = null;
+//   width = 1081;
+//   height = 1080;
+//   maxWind = 10000;
+//   kernel = 1081;
+//   subStep = 3;
+//   centroids = 2;
+//   alpha = 0.95;
+//   iterations = 0;
 
-  async applyCent(cent) {
-    await 0;
-    for (let [i, j] of cent) {
-      const factor = Math.random() * this.maxWind;
-      for (let m = -this.kernel / 2; m < this.kernel / 2; m++) {
-        for (let n = -this.kernel / 2; n < this.kernel / 2; n++) {
-          const x = Math.floor(i + m);
-          const y = Math.floor(j + n);
-          if (x < 0 || x >= this.width || y < 0 || y >= this.height) continue;
-          this.windMap[x * this.height + y] +=
-            (factor / ((this.kernel / 8) * Math.sqrt(2 * Math.PI))) *
-            Math.exp(-(m * m + n * n) / ((this.kernel * this.kernel) / 32));
-        }
-      }
-    }
-  }
+//   async applyCent(cent) {
+//     await 0;
+//     for (let [i, j] of cent) {
+//       const factor = Math.random() * this.maxWind;
+//       for (let m = -this.kernel / 2; m < this.kernel / 2; m++) {
+//         for (let n = -this.kernel / 2; n < this.kernel / 2; n++) {
+//           const x = Math.floor(i + m);
+//           const y = Math.floor(j + n);
+//           if (x < 0 || x >= this.width || y < 0 || y >= this.height) continue;
+//           this.windMap[x * this.height + y] +=
+//             (factor / ((this.kernel / 8) * Math.sqrt(2 * Math.PI))) *
+//             Math.exp(-(m * m + n * n) / ((this.kernel * this.kernel) / 32));
+//         }
+//       }
+//     }
+//   }
 
-  next() {
-    if (this.windMap) {
-      this.windMap = this.windMap.map(x => x * this.alpha);
-    } else {
-      this.windMap = new Float32Array(this.width * this.height);
-    }
+//   next() {
+//     if (this.windMap) {
+//       this.windMap = this.windMap.map(x => x * this.alpha);
+//     } else {
+//       this.windMap = new Float32Array(this.width * this.height);
+//     }
 
-    if (this.iterations % 6 == 0) {
-      const cent = Array(this.centroids)
-        .fill(0)
-        .map(() => [Math.random() * this.width, Math.random() * this.height]);
+//     if (this.iterations % 6 == 0) {
+//       const cent = Array(this.centroids)
+//         .fill(0)
+//         .map(() => [Math.random() * this.width, Math.random() * this.height]);
 
-      this.applyCent(cent);
-    }
+//       this.applyCent(cent);
+//     }
 
 
-    this.iterations += 1;
-  }
+//     this.iterations += 1;
+//   }
 
-  getWind(x, y) {
-    if (!this.windMap) this.next();
-    if (x >= this.width) x = this.width - 1;
-    if (y >= this.height) y = this.height - 1;
-    if (x < 0) x = 0;
-    if (y < 0) y = 0;
-    x = Math.floor(x);
-    y = Math.floor(y);
-    let sx = 0,
-      sy = 0;
-    //let counterX = 0,
-    // counterY = 0;
-    for (let i = -3; i <= 3; i++) {
-      for (let j = -3; j <= 3; j++) {
-        if (
-          x + i < 0 ||
-          x + i >= this.width ||
-          y + j < 0 ||
-          y + j >= this.height
-        )
-          continue;
-        // if (i != 0) counterX++;
-        // if (j != 0) counterY++;
-        if (i != 0) sx += (this.windMap[x * this.height + y] - this.windMap[(x + i) * this.height + y + j]) / i;
-        if (j != 0) sy += (this.windMap[x * this.height + y] - this.windMap[(x + i) * this.height + y + j]) / j;
-      }
-    }
-    return [-sy, sx];
-  }
-}
+//   getWind(x, y) {
+//     if (!this.windMap) this.next();
+//     if (x >= this.width) x = this.width - 1;
+//     if (y >= this.height) y = this.height - 1;
+//     if (x < 0) x = 0;
+//     if (y < 0) y = 0;
+//     x = Math.floor(x);
+//     y = Math.floor(y);
+//     let sx = 0,
+//       sy = 0;
+//     //let counterX = 0,
+//     // counterY = 0;
+//     for (let i = -3; i <= 3; i++) {
+//       for (let j = -3; j <= 3; j++) {
+//         if (
+//           x + i < 0 ||
+//           x + i >= this.width ||
+//           y + j < 0 ||
+//           y + j >= this.height
+//         )
+//           continue;
+//         // if (i != 0) counterX++;
+//         // if (j != 0) counterY++;
+//         if (i != 0) sx += (this.windMap[x * this.height + y] - this.windMap[(x + i) * this.height + y + j]) / i;
+//         if (j != 0) sy += (this.windMap[x * this.height + y] - this.windMap[(x + i) * this.height + y + j]) / j;
+//       }
+//     }
+//     return [-sy, sx];
+//   }
+// }
 
 let numCircleDivisions = 10;
 const numCircleInstances = 10000;
@@ -322,7 +323,7 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
         c1 = c3;
         t.x = t.z;
       }
-      c1 = c1 * 0.5;
+      c1 = c1 * 0.4;
       circleCenter = circleCenter + c1;
       // Modulate the circle sizes around the circle and in time
       float circleSize = 0.2 + 0.12 * cos(theta * 9.0 - time * 2.0);
@@ -389,14 +390,17 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
 
   const gap = 30;
 
-  for (let i = 0; i < 1081 / gap; i++) {
-    for (let j = 0; j < 1080 / gap; j++) {
+  for (let i = 0; i < Math.floor(1081 / gap); i++) {
+    for (let j = 0; j < Math.floor(1080 / gap); j++) {
       sticks.push(new Stick(i * gap + gap / 2, j * gap + gap / 2));
     }
   }
 
 
   let latestNum = 0;
+  let lastPeoples = [];
+  // let times;
+
 
   const camera = new Camera(videoElement, {
     deviceId,
@@ -404,7 +408,10 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
     onFrame: async () => {
       if (net) {
         let startTime = Date.now();
-        const poses = await net.estimateMultiplePoses();
+        const poses = await net.estimateMultiplePoses(videoElement, {
+          // flipHorizontal: true,
+          maxDetections: 64,
+        });
 
         let filteredPoses = poses.filter(pose => pose.score > 0.3);
 
@@ -431,16 +438,34 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
 
         coords = Array.from(Array(8).keys()).map(() => 10);
         for (let i = 0; i < filteredPoses.length && i < 4; i++) {
-          coords[2 * i] = 1 - (filteredPoses[i].keypoints[0].position.x / 1081 * (-2) + 1);
-          coords[2 * i + 1] = 1 - (filteredPoses[i].keypoints[0].position.y / 1080 * 2 - 1);
-          targetAlpha[i] = (1 - filteredPoses[i].keypoints[POSE_RIGHT_WRIST].position.y / 1080) * 0.7 + 0.3;
+          coords[2 * i] = filteredPoses[i].joints[2].depthX * 2 - 1;
+          coords[2 * i + 1] = -2 * filteredPoses[i].joints[2].depthY + 1;
+          targetAlpha[i] = (0.8 - filteredPoses[i].joints[11].depthY * 0.8 + 0.2);
           // targetAlpha[i] = 1;
         }
+
+        let cents = []
+        for (let i = 0; i < lastPeoples.length; i++) {
+
+          let deltaX = filteredPoses[i].joints[7].depthX - lastPeoples[i].joints[7].depthX;
+          let deltaY = filteredPoses[i].joints[7].depthY - lastPeoples[i].joints[7].depthY;
+          if (deltaX < 0.01 && deltaY < 0.01)
+            continue;
+          cents.push([filteredPoses[i].joints[7].depthX * 1081, filteredPoses[i].joints[7].depthY * 1080]);
+        }
+
+        if (cents) {
+          window.GlobalWind.applyCent(cents);
+          // times ++;
+        }
+        // console.log(cents);
+
+        lastPeoples = filteredPoses;
 
 
         hightestLeftHand = Math.max(...filteredPoses.map(pose => pose.keypoints[POSE_LEFT_WRIST].position.y));
 
-        console.log(filteredPoses[0].joints[2])
+        // console.log(filteredPoses[0].joints[2])
 
         let endTime = Date.now();
         $Vue.fpsCount = Math.round(1000 / (endTime - startTime));
@@ -484,11 +509,22 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
     particles2.addChild(dude);
   }
 
-  const wind = new Wind();
-  wind.next()
-  console.log(wind, color, hightestLeftHand, draw);
+  // const wind = new Wind();
+  // wind.next()
+  console.log(hightestLeftHand);
 
   let iteratins = 0;
+
+  let winds = sticks.map(() => [0, 0])
+
+  const stickPos = sticks.map(s => [s.cx, s.cy])
+
+  async function refreshWinds() {
+    winds = await window.GlobalWind.getWinds(stickPos)
+    requestAnimationFrame(refreshWinds)
+  }
+
+  requestAnimationFrame(refreshWinds)
 
   app.ticker.add(() => {
 
@@ -498,13 +534,14 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
     draw();
 
     if (iteratins % 5 == 0) {
-      wind.next();
+      // wind.next();
       // iterate through the sprites and update their position
+      // const winds = window.GlobalWind.getWinds()
       for (let i = 0; i < maggots.length; i++) {
         const dude = maggots[i];
-        sticks[i].blow(...wind.getWind(sticks[i].cx, sticks[i].cy));
+        sticks[i].blow(...winds[i]);
         dude.alpha = Math.sin((sticks[i].phi / 180) * Math.PI);
-        console.log(hightestLeftHand);
+        // console.log(hightestLeftHand);
         dude.angle = sticks[i].rho;
         dude.tint = colorCache[Math.round(sticks[i].rho + 360) % 360]
         // dude.tint = parseInt(

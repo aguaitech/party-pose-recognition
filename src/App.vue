@@ -175,7 +175,8 @@ export default {
           break;
         case "Mixed":
           stop = mixedMode(
-            fakeVideoElement,
+            realVideoElement,
+            // fakeVideoElement,
             canvasElement,
             net,
             this,
@@ -205,6 +206,7 @@ export default {
   },
   async mounted() {
     net = loadKinect();
+    net = await loadNet(16, 0.5, 500);
 
     const devices = await navigator.mediaDevices.enumerateDevices();
     this.cameraOptions = devices.filter(
