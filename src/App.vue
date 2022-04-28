@@ -1,5 +1,5 @@
 <template>
-  <p>{{ fpsCount }} fps, {{ peopleCount }} people</p>
+  <!-- <p>{{ fpsCount }} fps, {{ peopleCount }} people</p> -->
   <!-- <p>
     Choose Camera:
     <el-select v-model="camera" placeholder="Select Camera" size="large">
@@ -11,7 +11,7 @@
       />
     </el-select>
   </p> -->
-  <p>
+  <!-- <p>
     Choose display mode:
     <el-radio-group v-model="mode" size="large">
       <el-radio-button label="Debug" />
@@ -22,7 +22,7 @@
       <el-radio-button label="Liquid" />
       <el-radio-button label="Scope" />
     </el-radio-group>
-  </p>
+  </p> -->
   <el-button type="primary" v-on:click="fullscreen">Full Screen</el-button>
   <!-- <p>
     Choose precision:
@@ -34,7 +34,7 @@
     </el-radio-group>
   </p> -->
   <div
-    id='fullscreen'
+    id="fullscreen"
     style="
       display: flex;
       flex-direction: row;
@@ -47,11 +47,7 @@
       id="canvas_container"
       style="width: 1083px; position: relative"
     >
-      <canvas
-        width="1081"
-        height="1080"
-        style="transform: scaleX(-1)"
-      ></canvas>
+      <canvas width="1081" height="1080" style="transform: scaleX(-1)"></canvas>
     </div>
   </div>
 </template>
@@ -181,8 +177,8 @@ export default {
           break;
         case "Mixed":
           stop = mixedMode(
-            realVideoElement,
-            // fakeVideoElement,
+            // realVideoElement,
+            fakeVideoElement,
             canvasElement,
             net,
             this,
@@ -212,7 +208,7 @@ export default {
   },
   async mounted() {
     net = loadKinect();
-    net = await loadNet(16, 0.5, 500);
+    // net = await loadNet(16, 0.5, 500);
 
     const devices = await navigator.mediaDevices.enumerateDevices();
     this.cameraOptions = devices.filter(
@@ -221,6 +217,36 @@ export default {
     this.camera = this.cameraOptions[0]?.deviceId || "";
 
     this.mountMode();
+
+    document.addEventListener("fullscreenchange", exitHandler);
+    document.addEventListener("webkitfullscreenchange", exitHandler);
+    document.addEventListener("mozfullscreenchange", exitHandler);
+    document.addEventListener("MSFullscreenChange", exitHandler);
+
+    function exitHandler() {
+      if (
+        !document.fullscreenElement &&
+        !document.webkitIsFullScreen &&
+        !document.mozFullScreen &&
+        !document.msFullscreenElement
+      ) {
+        // exit fullscreen
+        document.querySelectorAll(".output_canvas canvas").forEach((n) => {
+          n.style.width = "1081px";
+          n.style.height = "1080px";
+        });
+        document.querySelector(".output_canvas").style.width = "1083px";
+      } else {
+        // enter fullscreen
+        document.querySelectorAll(".output_canvas canvas").forEach((n) => {
+          n.style.width = window.innerWidth + "px";
+          n.style.height = window.innerHeight + "px";
+          n.style.objectFit = "contain";
+        });
+        document.querySelector(".output_canvas").style.width =
+          window.innerWidth + "px";
+      }
+    }
   },
   async unmounted() {
     if (stop) {

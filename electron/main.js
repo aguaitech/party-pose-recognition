@@ -19,6 +19,11 @@ const createMainWindow = () => {
         : `file://${path.join(__dirname, '../dist/index.html')}`;
 
     mainWindow.loadURL(startURL);
+    mainWindow.setMenu(null)
+
+    if (isDev) {
+        mainWindow.webContents.openDevTools()
+    }
 
     mainWindow.once('ready-to-show', () => mainWindow.show());
 

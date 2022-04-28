@@ -6,8 +6,8 @@
 //   POSE_RIGHT_EAR,
 //   POSE_RIGHT_EYE,
 // } from "@/core/constant";
-// import { Camera } from "@/core/camera";
-import { Camera } from "@mediapipe/camera_utils";
+import { Camera } from "@/core/camera";
+// import { Camera } from "@mediapipe/camera_utils";
 // import { drawConnectors } from "@mediapipe/drawing_utils";
 // import seedrandom from "seedrandom";
 import * as PIXI from "pixi.js";
@@ -274,6 +274,7 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
   canvas.height = 1080;
   canvas.style.position = 'absolute';
   canvas.style.left = '0';
+  canvas.style.top = '0';
   document.getElementById("canvas_container").appendChild(canvas);
 
 
@@ -399,7 +400,7 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
 
   let latestNum = 0;
   let lastPeoples = [];
-  let times = 0;
+  // let times = 0;
 
 
   const camera = new Camera(videoElement, {
@@ -446,10 +447,10 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
 
         let cents = []
         for (let i = 0; i < lastPeoples.length; i++) {
-
+          if (!filteredPoses[i]) continue
           let deltaX = filteredPoses[i].joints[7].depthX - lastPeoples[i].joints[7].depthX;
           let deltaY = filteredPoses[i].joints[7].depthY - lastPeoples[i].joints[7].depthY;
-          if (deltaX < 0.01 && deltaY < 0.01)
+          if (Math.abs(deltaX) < 0.01 && Math.abs(deltaY) < 0.01)
             continue;
           cents.push([filteredPoses[i].joints[7].depthX * 1081, filteredPoses[i].joints[7].depthY * 1080]);
         }
@@ -457,11 +458,11 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
         // cents.push([100, 100]);
         // cents.push([1000, 150]);
 
-        if (cents && times % 5 == 0) {
+        if (cents) {
           // console.log('in loop');
           window.GlobalWind.applyCent(cents);
         }
-        times++;
+        // times++;
         // console.log(times);
 
         lastPeoples = filteredPoses;
@@ -529,6 +530,7 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
   }
 
   requestAnimationFrame(refreshWinds)
+  // console.log(winds)
 
   app.ticker.add(() => {
 
