@@ -12,7 +12,7 @@ import { Camera } from "@/core/camera";
 // import seedrandom from "seedrandom";
 import * as PIXI from "pixi.js";
 import color from "color";
-import { POSE_LEFT_WRIST } from "@/core/constant";
+import { KINECT_HAND_LEFT, KINECT_HAND_RIGHT, KINECT_HEAD, POSE_LEFT_WRIST } from "@/core/constant";
 const createREGL = require('regl')
 
 class Stick {
@@ -324,7 +324,7 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
         c1 = c3;
         t.x = t.z;
       }
-      c1 = c1 * 0.4;
+      c1 = c1 * (1.0 - t.x);
       circleCenter = circleCenter + c1;
       // Modulate the circle sizes around the circle and in time
       float circleSize = 0.2 + 0.12 * cos(theta * 9.0 - time * 2.0);
@@ -400,7 +400,7 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
 
   let latestNum = 0;
   let lastPeoples = [];
-  // let times = 0;
+  let times = 0;
 
 
   const camera = new Camera(videoElement, {
@@ -415,6 +415,18 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
         });
 
         let filteredPoses = poses.filter(pose => pose.score > 0.3);
+        let notShow = Array(filteredPoses.length).fill(0).map(() => false);
+        let cnt = 0;
+
+        // console.log(filteredPoses.map(p => p.joints[KINECT_HEAD].cameraZ));
+        const minZ = Math.min(...filteredPoses.map(p => p.joints[KINECT_HEAD].cameraZ));
+        filteredPoses.forEach((p, i) => {
+          if(p.joints[KINECT_HEAD].cameraZ > minZ + 0.4) {
+            notShow[i] = true;
+            
+          }
+        })
+        // console.log(minZ, notShow)
 
         if (latestNum != filteredPoses.length) {
           latestNum = filteredPoses.length;
@@ -438,31 +450,54 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
         }
 
         coords = Array.from(Array(8).keys()).map(() => 10);
-        for (let i = 0; i < filteredPoses.length && i < 4; i++) {
-          coords[2 * i] = filteredPoses[i].joints[2].depthX * 2 - 1;
-          coords[2 * i + 1] = -2 * filteredPoses[i].joints[2].depthY + 1;
-          targetAlpha[i] = (0.8 - filteredPoses[i].joints[11].depthY * 0.8 + 0.2);
+        for (let i = 0; i < filteredPoses.length && cnt < 4; i++) {
+          if(notShow[i])continue;
+          coords[2 * cnt] = (filteredPoses[i].joints[2].depthX + filteredPoses[i].joints[11].depthX ) - 1;
+          coords[2 * cnt + 1] = -1 * (filteredPoses[i].joints[2].depthY + filteredPoses[i].joints[11].depthY ) + 1;
+          targetAlpha[cnt] = 0.1 +  Math.max(
+            Math.abs(filteredPoses[i].joints[KINECT_HAND_LEFT].cameraX - filteredPoses[i].joints[KINECT_HAND_RIGHT].cameraX) ,
+            Math.abs(filteredPoses[i].joints[KINECT_HAND_LEFT].cameraY - filteredPoses[i].joints[KINECT_HAND_RIGHT].cameraY) ,
+          )
+          cnt ++;
+          // console.log(targetAlpha);
+
           // targetAlpha[i] = 1;
         }
 
         let cents = []
-        for (let i = 0; i < lastPeoples.length; i++) {
-          if (!filteredPoses[i]) continue
-          let deltaX = filteredPoses[i].joints[7].depthX - lastPeoples[i].joints[7].depthX;
-          let deltaY = filteredPoses[i].joints[7].depthY - lastPeoples[i].joints[7].depthY;
-          if (Math.abs(deltaX) < 0.01 && Math.abs(deltaY) < 0.01)
-            continue;
-          cents.push([filteredPoses[i].joints[7].depthX * 1081, filteredPoses[i].joints[7].depthY * 1080]);
+        for (let i = 0; i < lastPeoples.length && i < 4; i++) {
+
+          if (!filteredPoses[i] || notShow[i]) continue
+
+          let j = KINECT_HAND_LEFT;
+          const threehold = 0.02;
+
+
+          let deltaX = filteredPoses[i].joints[j].depthX - lastPeoples[i].joints[j].depthX;
+          let deltaY = filteredPoses[i].joints[j].depthY - lastPeoples[i].joints[j].depthY;
+          if (Math.abs(deltaX) > threehold || Math.abs(deltaY) > threehold) {
+
+            cents.push([filteredPoses[i].joints[j].depthX * 1081, filteredPoses[i].joints[j].depthY * 1080]);
+          }
+
+
+          j = KINECT_HAND_RIGHT;
+
+
+          deltaX = filteredPoses[i].joints[j].depthX - lastPeoples[i].joints[j].depthX;
+          deltaY = filteredPoses[i].joints[j].depthY - lastPeoples[i].joints[j].depthY;
+          if (Math.abs(deltaX) > threehold || Math.abs(deltaY) > threehold) {
+
+            cents.push([filteredPoses[i].joints[j].depthX * 1081, filteredPoses[i].joints[j].depthY * 1080]);
+          }
+
         }
 
-        // cents.push([100, 100]);
-        // cents.push([1000, 150]);
-
-        if (cents) {
+        if (cents && times % 2 == 0) {
           // console.log('in loop');
           window.GlobalWind.applyCent(cents);
         }
-        // times++;
+        times++;
         // console.log(times);
 
         lastPeoples = filteredPoses;
@@ -539,7 +574,7 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
     // regl.clear({ color: [1, 1, 1, 1] });
     draw();
 
-    if (iteratins % 5 == 0) {
+    if (iteratins % 7 == 0) {
       // wind.next();
       // iterate through the sprites and update their position
       // const winds = window.GlobalWind.getWinds()
