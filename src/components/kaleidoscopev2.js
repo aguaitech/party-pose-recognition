@@ -32,7 +32,7 @@ class Kaleidoscope {
     this.radius = window.innerWidth / 2;
     this.slices = 12;
     this.zoom = 1.0;
-    this.width = 1081;
+    this.width = 1920;
     this.height = 1080;
     this.triangleSize = 200;
     this.cols = Math.ceil(this.width / (this.triangleSize / 2)) + 1;
@@ -172,7 +172,7 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
 
   const app = new PIXI.Application({
     view: canvasElement,
-    width: 1081,
+    width: 1920,
     height: 1080,
   });
 
@@ -232,7 +232,7 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
         }
       }
     },
-    width: 1081,
+    width: 1920,
     height: 1080,
   });
   camera.start();

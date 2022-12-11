@@ -122,10 +122,10 @@ class Stick {
 
 // class Wind {
 //   windMap = null;
-//   width = 1081;
+//   width = 1920;
 //   height = 1080;
 //   maxWind = 10000;
-//   kernel = 1081;
+//   kernel = 1920;
 //   subStep = 3;
 //   centroids = 2;
 //   alpha = 0.95;
@@ -234,7 +234,7 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
 
   const app = new PIXI.Application({
     view: canvasElement,
-    width: 1081,
+    width: 1920,
     height: 1080,
   });
 
@@ -270,7 +270,7 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
   canvas.value = regl;
   canvas.__reglConfig = { dpi, reglOptions }
 
-  canvas.width = 1081;
+  canvas.width = 1920;
   canvas.height = 1080;
   canvas.style.position = 'absolute';
   canvas.style.left = '0';
@@ -389,9 +389,9 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
   };
 
 
-  const gap = 30;
+  const gap = 50;
 
-  for (let i = 0; i < Math.floor(1081 / gap); i++) {
+  for (let i = 0; i < Math.floor(1920 / gap); i++) {
     for (let j = 0; j < Math.floor(1080 / gap); j++) {
       sticks.push(new Stick(i * gap + gap / 2, j * gap + gap / 2));
     }
@@ -477,7 +477,7 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
           let deltaY = filteredPoses[i].joints[j].depthY - lastPeoples[i].joints[j].depthY;
           if (Math.abs(deltaX) > threehold || Math.abs(deltaY) > threehold) {
 
-            cents.push([filteredPoses[i].joints[j].depthX * 1081, filteredPoses[i].joints[j].depthY * 1080]);
+            cents.push([filteredPoses[i].joints[j].depthX * 1920, filteredPoses[i].joints[j].depthY * 1080]);
           }
 
 
@@ -488,7 +488,7 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
           deltaY = filteredPoses[i].joints[j].depthY - lastPeoples[i].joints[j].depthY;
           if (Math.abs(deltaX) > threehold || Math.abs(deltaY) > threehold) {
 
-            cents.push([filteredPoses[i].joints[j].depthX * 1081, filteredPoses[i].joints[j].depthY * 1080]);
+            cents.push([filteredPoses[i].joints[j].depthX * 1920, filteredPoses[i].joints[j].depthY * 1080]);
           }
 
         }
@@ -513,7 +513,7 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
 
       }
     },
-    width: 1081,
+    width: 1920,
     height: 1080,
   });
   camera.start();

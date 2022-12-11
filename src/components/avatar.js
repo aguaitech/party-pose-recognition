@@ -136,7 +136,7 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
             tempCtx.closePath();
             tempCtx.fill();
 
-            const scaleX = videoElement.videoWidth / 1081;
+            const scaleX = videoElement.videoWidth / 1920;
             const scaleY = videoElement.videoHeight / 1080;
 
             tempCtx.globalCompositeOperation = "source-in";
@@ -190,7 +190,7 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
         }
       }
     },
-    width: 1081,
+    width: 1920,
     height: 1080,
   });
   camera.start();

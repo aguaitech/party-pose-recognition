@@ -38,10 +38,10 @@ contextBridge.exposeInMainWorld('Kinect', {
 
 // class Wind {
 //     windMap = null;
-//     width = 1081;
+//     width = 1920;
 //     height = 1080;
 //     maxWind = 10000;
-//     kernel = 1081;
+//     kernel = 1920;
 //     subStep = 3;
 //     centroids = 2;
 //     alpha = 0.95;

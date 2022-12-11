@@ -35,17 +35,17 @@ class Drop {
     this.vy /= norm;
     this.cx += this.vx;
     this.cy += this.vy;
-    this.cx = Math.min(1081, Math.max(this.cx, 0));
+    this.cx = Math.min(1920, Math.max(this.cx, 0));
     this.cy = Math.min(1080, Math.max(this.cy, 0));
   }
 }
 
 class Wind {
   windMap = null;
-  width = 1081;
+  width = 1920;
   height = 1080;
   maxWind = 30000;
-  kernel = 1081;
+  kernel = 1920;
   subStep = 3;
   centroids = 2;
   alpha = 0.99;
@@ -176,21 +176,21 @@ export default function (videoElement, canvasElement, net, $Vue) {
 
   const app = new PIXI.Application({
     view: canvasElement,
-    width: 1081,
+    width: 1920,
     height: 1080,
   });
 
   const drops = [];
 
   for (let i = 0; i < 100; i++) {
-    drops.push(new Drop(Math.random() * 1081, Math.random() * 1080));
+    drops.push(new Drop(Math.random() * 1920, Math.random() * 1080));
   }
 
   // let pointer = 0;
 
   // const gap = 30;
 
-  // for (let i = 0; i < 1081 / gap; i++) {
+  // for (let i = 0; i < 1920 / gap; i++) {
   //   for (let j = 0; j < 1080 / gap; j++) {
   //     sticks.push(new Stick(i * gap + gap / 2, j * gap + gap / 2));
   //   }
@@ -209,7 +209,7 @@ export default function (videoElement, canvasElement, net, $Vue) {
         $Vue.peopleCount = poses.length;
       }
     },
-    width: 1081,
+    width: 1920,
     height: 1080,
   });
   camera.start();
@@ -217,7 +217,7 @@ export default function (videoElement, canvasElement, net, $Vue) {
   // create an array to store all the sprites
   const maggots = [];
 
-  const totalSprites = (1081 + 1080) * 2 * 50;
+  const totalSprites = (1920 + 1080) * 2 * 50;
 
   const particles = new PIXI.ParticleContainer(totalSprites, {
     position: true,
@@ -237,7 +237,7 @@ export default function (videoElement, canvasElement, net, $Vue) {
 
   for (let i = 0; i < 10; i++) {
     const contour = wind.getContourLine(i / 10, 0.001);
-    for (let j = 0; j < ((1081 + 1080) * 2 * 50) / 10; j++) {
+    for (let j = 0; j < ((1920 + 1080) * 2 * 50) / 10; j++) {
       // create a new Sprite
       const dude = new PIXI.Sprite(circleTexture);
 
@@ -278,8 +278,8 @@ export default function (videoElement, canvasElement, net, $Vue) {
 
     for (let i = 0; i < 10; i++) {
       const contour = wind.getContourLine(i / 10, 0.001);
-      for (let j = 0; j < ((1081 + 1080) * 2 * 50) / 10; j++) {
-        const dude = maggots[(i * ((1081 + 1080) * 2 * 50)) / 10 + j];
+      for (let j = 0; j < ((1920 + 1080) * 2 * 50) / 10; j++) {
+        const dude = maggots[(i * ((1920 + 1080) * 2 * 50)) / 10 + j];
 
         if (contour[j]) {
           dude.position.set(contour[j][0], contour[j][1]);

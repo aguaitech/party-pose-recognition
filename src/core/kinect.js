@@ -59,7 +59,7 @@ export default () => {
                     body.keypoints = [KINECT_HEAD, KINECT_HEAD, KINECT_HEAD, KINECT_HEAD, KINECT_HEAD, KINECT_SHOULDER_LEFT, KINECT_SHOULDER_RIGHT, KINECT_ELBOW_LEFT, KINECT_ELBOW_RIGHT, KINECT_WRIST_LEFT, KINECT_WRIST_RIGHT, KINECT_HIP_LEFT, KINECT_HIP_RIGHT, KINECT_KNEE_LEFT, KINECT_KNEE_RIGHT, KINECT_ANKLE_LEFT, KINECT_ANKLE_RIGHT].map((i) => body.joints[i]).map((j, i) => {
                         const part = ['nose', 'leftEye', 'rightEye', 'leftEar', 'rightEar', 'leftShoulder', 'rightShoulder', 'leftElbow', 'rightElbow', 'leftWrist', 'rightWrist', 'leftHip', 'rightHip', 'leftKnee', 'rightKnee', 'leftAnkle', 'rightAnkle'][i]
                         const score = j.trackingState == kinect.TrackingState.notTracked ? 0 : j.trackingState == kinect.TrackingState.inferred ? 0.5 : j.trackingState == kinect.TrackingState.tracked ? 1 : 0
-                        const position = { x: (j.depthX) * 1081, y: (j.depthY) * 1080 }
+                        const position = { x: (j.depthX) * 1920, y: (j.depthY) * 1080 }
                         return { part, score, position }
                     })
                     return body

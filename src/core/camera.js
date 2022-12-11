@@ -17,7 +17,7 @@ export class Camera {
                 imageData.data.set(s.color.buffer)
                 ctx.putImageData(imageData, 0, 0)
                 const videoCtx = this.videoElement.getContext('2d')
-                videoCtx.drawImage(canvas, 0, 0, 1081, 1080)
+                videoCtx.drawImage(canvas, 0, 0, 1920, 1080)
             }
             // if (this.options.infraredCanvas) {
             //     const canvas = document.createElement('canvas')
@@ -30,7 +30,7 @@ export class Camera {
             //     }
             //     ctx.putImageData(imageData, 0, 0)
             //     const infraredCtx = this.options.infraredCanvas.getContext('2d')
-            //     infraredCtx.drawImage(canvas, 0, 0, 1081, 1080)
+            //     infraredCtx.drawImage(canvas, 0, 0, 1920, 1080)
             // }
             // if (this.options.depthCanvas) {
             //     const canvas = document.createElement('canvas')
@@ -43,7 +43,7 @@ export class Camera {
             //     }
             //     ctx.putImageData(imageData, 0, 0)
             //     const depthCtx = this.options.depthCanvas.getContext('2d')
-            //     depthCtx.drawImage(canvas, 0, 0, 1081, 1080)
+            //     depthCtx.drawImage(canvas, 0, 0, 1920, 1080)
             // }
             this.options.onFrame && this.options.onFrame(s)
         })

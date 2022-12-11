@@ -26,7 +26,7 @@ function getCenterByTheta(theta, time, scale) {
   const distance = 0.6 + 0.2 * Math.cos(theta * 6 + Math.cos(theta * 8 + time));
   const circleCenter = direction
     .map((v) => v * distance * scale)
-    .map((v, i) => v + (i == 0 ? 1081 / 2 : 1080 / 2));
+    .map((v, i) => v + (i == 0 ? 1920 / 2 : 1080 / 2));
   return circleCenter;
 }
 
@@ -61,13 +61,13 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
 
   const app = new PIXI.Application({
     view: canvasElement,
-    width: 1081,
+    width: 1920,
     height: 1080,
   });
 
   const circles = [];
   let counter = 0;
-  const scale = 1081 / 2;
+  const scale = 1920 / 2;
 
   const particles = new PIXI.ParticleContainer(MAX_CIRCLE_CNT, {
     position: true,
@@ -129,7 +129,7 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
         $Vue.peopleCount = poses.length;
       }
     },
-    width: 1081,
+    width: 1920,
     height: 1080,
   });
   camera.start();

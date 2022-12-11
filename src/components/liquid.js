@@ -35,7 +35,7 @@ import SimplexNoise from "simplex-noise";
 //     this.vy /= norm;
 //     this.cx += this.vx;
 //     this.cy += this.vy;
-//     this.cx = Math.min(1081, Math.max(this.cx, 0));
+//     this.cx = Math.min(1920, Math.max(this.cx, 0));
 //     this.cy = Math.min(1080, Math.max(this.cy, 0));
 //   }
 // }
@@ -53,14 +53,14 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
 
   const app = new PIXI.Application({
     view: canvasElement,
-    width: 1081,
+    width: 1920,
     height: 1080,
   });
 
   // const drops = [];
 
   // for (let i = 0; i < 100; i++) {
-  //   drops.push(new Drop(Math.random() * 1081, Math.random() * 1080));
+  //   drops.push(new Drop(Math.random() * 1920, Math.random() * 1080));
   // }
 
   const colorCache = [];
@@ -84,13 +84,13 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
 
   // const gap = 30;
 
-  // for (let i = 0; i < 1081 / gap; i++) {
+  // for (let i = 0; i < 1920 / gap; i++) {
   //   for (let j = 0; j < 1080 / gap; j++) {
   //     sticks.push(new Stick(i * gap + gap / 2, j * gap + gap / 2));
   //   }
   // }
 
-  const userMaxSprites = (1081 * 1080) / 100;
+  const userMaxSprites = (1920 * 1080) / 100;
 
   const drops = [];
 
@@ -185,7 +185,7 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
         $Vue.peopleCount = poses.length;
       }
     },
-    width: 1081,
+    width: 1920,
     height: 1080,
   });
   camera.start();
@@ -193,7 +193,7 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
   // create an array to store all the sprites
   // const maggots = [];
 
-  const totalSprites = 1081 * 1080;
+  const totalSprites = 1920 * 1080;
 
   // const particles = new PIXI.ParticleContainer(totalSprites, {
   //   position: false,
@@ -213,7 +213,7 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
 
   const uArray = new Uint8Array(totalSprites * 4);
 
-  for (let i = 0; i < 1081; i++) {
+  for (let i = 0; i < 1920; i++) {
     for (let j = 0; j < 1080; j++) {
       uArray[(i * 1080 + j) * 4] = 0;
       uArray[(i * 1080 + j) * 4 + 1] = 0;
@@ -227,7 +227,7 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
       // dude.tint =
       //   colorCache[
       //     Math.round(
-      //       wind.noise3D((i / 1081) * 16, (j / 1080) * 16, counter / 32) * 99
+      //       wind.noise3D((i / 1920) * 16, (j / 1080) * 16, counter / 32) * 99
       //     )
       //   ];
 
@@ -237,7 +237,7 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
     }
   }
 
-  const texture = PIXI.Texture.fromBuffer(uArray, 1081, 1080);
+  const texture = PIXI.Texture.fromBuffer(uArray, 1920, 1080);
   const BG = new PIXI.Sprite(texture);
   app.stage.addChild(BG);
 
@@ -256,14 +256,14 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
     // We are now meeting the frame rate, so reset the last time the animation is done
     g_Time = timeNow;
 
-    const noiseArray = new Uint8Array(1081 * 1080);
-    for (let i = 0; i < 1081; i++) {
+    const noiseArray = new Uint8Array(1920 * 1080);
+    for (let i = 0; i < 1920; i++) {
       for (let j = 0; j < 1080; j++) {
         noiseArray[i * 1080 + j] = Math.min(
           Math.max(
             0,
             Math.round(
-              wind.noise3D((i / 1081) * 4, (j / 1080) * 4, counter / 100) * 99
+              wind.noise3D((i / 1920) * 4, (j / 1080) * 4, counter / 100) * 99
             )
           ),
           99
@@ -272,7 +272,7 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
     }
 
     const getWind = (x, y) => {
-      if (x >= 1081) x = 1081 - 1;
+      if (x >= 1920) x = 1920 - 1;
       if (y >= 1080) y = 1080 - 1;
       if (x < 0) x = 0;
       if (y < 0) y = 0;
@@ -284,7 +284,7 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
       // counterY = 0;
       for (let i = -3; i <= 3; i++) {
         for (let j = -3; j <= 3; j++) {
-          if (x + i < 0 || x + i >= 1081 || y + j < 0 || y + j >= 1080)
+          if (x + i < 0 || x + i >= 1920 || y + j < 0 || y + j >= 1080)
             continue;
           // if (i != 0) counterX++;
           // if (j != 0) counterY++;
@@ -319,22 +319,22 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
       dude.scale.set(dude.scale.x * 0.999);
     }
 
-    for (let i = 0; i < 1081; i++) {
+    for (let i = 0; i < 1920; i++) {
       for (let j = 0; j < 1080; j++) {
         const noise = noiseArray[i * 1080 + j];
         // if (noise % 9 === 0 && noise !== 0) {
-        //   uArray[(i * 1081 + j) * 4] = 255;
-        //   uArray[(i * 1081 + j) * 4 + 1] = 255;
-        //   uArray[(i * 1081 + j) * 4 + 2] = 255;
+        //   uArray[(i * 1920 + j) * 4] = 255;
+        //   uArray[(i * 1920 + j) * 4 + 1] = 255;
+        //   uArray[(i * 1920 + j) * 4 + 2] = 255;
         // } else {
-        //   uArray[(i * 1081 + j) * 4] = 0;
-        //   uArray[(i * 1081 + j) * 4 + 1] = 0;
-        //   uArray[(i * 1081 + j) * 4 + 2] = 0;
+        //   uArray[(i * 1920 + j) * 4] = 0;
+        //   uArray[(i * 1920 + j) * 4 + 1] = 0;
+        //   uArray[(i * 1920 + j) * 4 + 2] = 0;
         // }
-        uArray[(i * 1081 + j) * 4] = colorCache[noise][0];
-        uArray[(i * 1081 + j) * 4 + 1] = colorCache[noise][1];
-        uArray[(i * 1081 + j) * 4 + 2] = colorCache[noise][2];
-        uArray[(i * 1081 + j) * 4 + 3] = 255;
+        uArray[(i * 1920 + j) * 4] = colorCache[noise][0];
+        uArray[(i * 1920 + j) * 4 + 1] = colorCache[noise][1];
+        uArray[(i * 1920 + j) * 4 + 2] = colorCache[noise][2];
+        uArray[(i * 1920 + j) * 4 + 3] = 255;
       }
     }
 

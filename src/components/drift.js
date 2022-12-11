@@ -119,10 +119,10 @@ class Stick {
 
 class Wind {
   windMap = null;
-  width = 1081;
+  width = 1920;
   height = 1080;
   maxWind = 10000;
-  kernel = 1081;
+  kernel = 1920;
   subStep = 3;
   centroids = 2;
   alpha = 0.95;
@@ -197,7 +197,7 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
 
   const app = new PIXI.Application({
     view: canvasElement,
-    width: 1081,
+    width: 1920,
     height: 1080,
   });
 
@@ -207,7 +207,7 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
 
   const gap = 30;
 
-  for (let i = 0; i < 1081 / gap; i++) {
+  for (let i = 0; i < 1920 / gap; i++) {
     for (let j = 0; j < 1080 / gap; j++) {
       sticks.push(new Stick(i * gap + gap / 2, j * gap + gap / 2));
     }
@@ -227,7 +227,7 @@ export default function (videoElement, canvasElement, net, $Vue, deviceId) {
         $Vue.peopleCount = poses.length;
       }
     },
-    width: 1081,
+    width: 1920,
     height: 1080,
   });
   camera.start();

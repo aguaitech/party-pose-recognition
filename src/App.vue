@@ -45,9 +45,9 @@
     <div
       class="output_canvas"
       id="canvas_container"
-      style="width: 1083px; position: relative"
+      style="width: 1922px; position: relative"
     >
-      <canvas width="1081" height="1080" style="transform: scaleX(-1)"></canvas>
+      <canvas width="1920" height="1080" style="transform: scaleX(-1)"></canvas>
     </div>
   </div>
 </template>
@@ -99,7 +99,7 @@ export default {
           net = await loadNet(16, 0.75, 1000);
           break;
         case "ultra":
-          net = await loadNet(8, 1, 1081);
+          net = await loadNet(8, 1, 1920);
           break;
       }
       this.mountMode();
@@ -115,13 +115,13 @@ export default {
     },
     async mountMode() {
       const realVideoElement = document.createElement("video");
-      realVideoElement.width = 1081;
+      realVideoElement.width = 1920;
       realVideoElement.height = 1080;
       const fakeVideoElement = document.createElement("canvas");
-      fakeVideoElement.width = 1081;
+      fakeVideoElement.width = 1920;
       fakeVideoElement.height = 1080;
       const canvasElement = document.createElement("canvas");
-      canvasElement.width = 1081;
+      canvasElement.width = 1920;
       canvasElement.height = 1080;
       // canvasElement.setAttribute(
       //   "style",
@@ -232,10 +232,10 @@ export default {
       ) {
         // exit fullscreen
         document.querySelectorAll(".output_canvas canvas").forEach((n) => {
-          n.style.width = "1081px";
+          n.style.width = "1920px";
           n.style.height = "1080px";
         });
-        document.querySelector(".output_canvas").style.width = "1083px";
+        document.querySelector(".output_canvas").style.width = "1922px";
       } else {
         // enter fullscreen
         document.querySelectorAll(".output_canvas canvas").forEach((n) => {
